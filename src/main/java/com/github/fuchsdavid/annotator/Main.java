@@ -208,13 +208,15 @@ public class Main {
                 document.insertBefore(document.createComment(license), root);
                 
                 final Node tbody = document.getElementsByTagName("tbody").item(0);
-                final Model m;
+                final Node caption = document.getElementsByTagName("caption").item(0);
                 if(ID2MODEL_LIST.get(session_id).size() > ID2POSITION.get(session_id).getPosition()){
-                    m = (Model)(ID2MODEL_LIST.get(session_id).toArray()[ID2POSITION.get(session_id).getPosition()]);
+                    final Model m = (Model)(ID2MODEL_LIST.get(session_id).toArray()[ID2POSITION.get(session_id).getPosition()]);
+                    final Node c = document.createElement("strong");
+                    c.appendChild(document.createTextNode("You are currently annotating resource:"));
+                    caption.appendChild(c);
+                    caption.appendChild(document.createTextNode(" <" + m.listSubjects().next().getURI() + ">"));
                     m.listStatements().forEachRemaining(statement -> {
                         Node tr = tbody.appendChild(document.createElement("tr"));
-                        Node s = tr.appendChild(document.createElement("td"));
-                        s.setTextContent(statement.getSubject().getURI());
                         Node p = tr.appendChild(document.createElement("td"));
                         p.setTextContent(statement.getPredicate().getURI());
                         Node o = tr.appendChild(document.createElement("td"));

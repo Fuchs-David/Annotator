@@ -43,21 +43,22 @@ getData.onreadystatechange = function(){
         let tbody = data.getElementsByTagName("tbody").item(0);
         data.removeChild(thead);
         data.removeChild(tbody);
+        data.getElementsByTagName("caption").item(0).innerHTML="<strong>You are currently annotating resource:</strong> &lt;" + triples[0].subject + "&gt;";
         try{
             for(var i=0;i<triples.length;i++){
                 let triple = triples[i];
                 let row = data.insertRow(-1);
-                row.insertCell(0).innerHTML=triple.subject;
-                row.insertCell(1).innerHTML=triple.predicate;
-                row.insertCell(2).innerHTML=triple.object;
+                row.insertCell(0).innerHTML=triple.predicate;
+                row.insertCell(1).innerHTML=triple.object;
             }
         }
         catch(Exception){
             console.warn("Inserting triples into table failed.");
         }
         finally{
-            data.createTHead().innerHTML="<tr><th>DBpedia subject</th><th>DBpedia predicate</th><th>DBpedia object</th></tr>";
+            data.createTHead().innerHTML="<tr><th>DBpedia predicate</th><th>DBpedia object</th></tr>";
             if(data.getElementsByTagName("tbody").length === 0) data.appendChild(document.createElement("tbody"));
+            window.scrollTo(0,0);
         }
     }
 };
