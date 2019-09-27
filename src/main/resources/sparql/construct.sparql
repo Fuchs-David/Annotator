@@ -1,0 +1,21 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+CONSTRUCT {
+  ?dbr ?dbp ?dbo.
+}
+WHERE {
+  ?dbr owl:sameAs ?wdr.
+  {
+    SELECT ?dbr ?wdr
+    WHERE {
+      ?dbr owl:sameAs ?wdr.
+      FILTER(strstarts(str(?wdr),"http://www.wikidata.org/")&&strstarts(str(?dbr),"http://dbpedia.org/")).
+    }
+    ORDER BY ?dbr
+    OFFSET ?offset
+    LIMIT ?limit
+  }
+  SERVICE <http://dbpedia.org/sparql> {
+    ?dbr ?dbp ?dbo.
+    FILTER(!strstarts(str(?dbo),"http://www.wikidata.org/")&&!strstarts(str(?dbo),"http://wikidata.dbpedia.org/")).
+  }
+}

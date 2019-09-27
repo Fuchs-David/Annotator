@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2019 User
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>DBpedia annotator</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="author" content="David Fuchs"/>
+        <link rel="stylesheet" type="text/css" href="annotator.css"/>
+        <script src="annotator.js"></script>
+    </head>
+    <body>
+        <h1>DBpedia annotator</h1>
+        <p>This application is designed to make it easier to annotate DBpedia resources with the following FRBR types:</p>
+        <ul>
+            <li>Expression</li>
+            <li>Manifestation</li>
+            <li>Item</li>
+            <li>Work</li>
+        </ul>
+        <table id="data">
+            <caption>Table of resources picked for annotation from DBpedia</caption>
+            <thead><tr><th>DBpedia subject</th><th>DBpedia predicate</th><th>DBpedia object</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <form method="POST">
+            <div id="radio_buttons">
+            <div>
+                <input type="radio" id="Expression" name="frbr_type" value="http://vocab.org/frbr/core.html#term-Expression"/>
+                <label id="Expression_label" for="Expression"><strong>Expression</strong>: A realization of a single work usually in a physical form.</label>
+            </div>
+            <div>
+                <input type="radio" id="Manifestation" name="frbr_type" value="http://vocab.org/frbr/core.html#term-Manifestation"/>
+                <label id="Manifestation_label" for="Manifestation"><strong>Manifestation</strong>: The physical embodiment of one or more expressions.</label>
+            </div>
+            <div>
+                <input type="radio" id="Item" name="frbr_type" value="http://vocab.org/frbr/core.html#term-Item"/>
+                <label id="Item_label" for="Item"><strong>Item</strong>: An exemplar of a single manifestation.</label>
+            </div>
+            <div>
+                <input type="radio" id="Work" name="frbr_type" value="http://vocab.org/frbr/core.html#term-Work"/>
+                <label id="Work_label" for="Work"><strong>Work</strong>: An abstract notion of an artistic or intellectual creation.</label>
+            </div>
+            </div>
+            <div>
+                <input type="button" id="previous" value="Previous" onclick="requestData('backward')"/>
+                <input type="button" id="next" value="Next" onclick="requestData('forward')"/>
+                <input type="button" id="submit" value="Submit" onclick="submitData()"/>
+            </div>
+        </form>
+    </body>
+</html>
