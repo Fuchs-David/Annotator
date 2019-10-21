@@ -52,3 +52,10 @@ form {
 .left {
     width: 70%;
 }
+tr:nth-child(even) {
+    background: lightgrey;
+}
+tr>th {
+    background: gray;
+    color: white;
+}
