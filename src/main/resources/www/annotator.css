@@ -23,7 +23,7 @@ html, body {
     width: 99%;
 }
 table, thead, tbody {
-    width: 100%;
+    width: 70%;
     table-layout: fixed;
     overflow-wrap: break-word;
 }
@@ -42,4 +42,13 @@ form div {
 }
 input#submit {
     margin-top: 1em;
+}
+form {
+    position: absolute;
+    top: 12em;
+    right: 0em;
+    width: 30%;
+}
+.left {
+    width: 70%;
 }
