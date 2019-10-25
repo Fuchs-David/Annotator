@@ -43,7 +43,7 @@ form div {
 input#submit {
     margin-top: 1em;
 }
-form {
+.right {
     position: absolute;
     top: 12em;
     right: 0em;
