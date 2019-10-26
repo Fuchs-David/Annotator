@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 User
+ * Copyright (C) 2019 David Fuchs
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,6 +49,9 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -63,7 +66,6 @@ import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.update.UpdateAction;
 import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.w3c.dom.DOMException;
@@ -79,16 +81,24 @@ import org.xml.sax.SAXException;
  */
 public class Main {
     private static final String INDEX = "/www/index.xhtml";
+    private static final String AUTH = "/www/auth.xhtml";
+    private static final String PASSWD = "/security/auth.json";
     private static final String CONSTRUCT = "/sparql/construct.sparql";
     private static final Random RNG = new Random();
+    
     private static final Map<String,Collection<Model>> ID2MODEL_LIST = new HashMap<>();
     private static final Map<String,Position> ID2POSITION = new HashMap<>();
+    private static final Map<String,Boolean> EMAIL2STATE = new HashMap<>();
+    private static final Map<String,User> ID2USER = new HashMap<>();
+    private static final Map<String,User> EMAIL2USER = new HashMap<>();
     private static final Map<String,Document> CACHED_FILES = new HashMap<>();
+    
     private static final TransformerFactory TF = TransformerFactory.newInstance();
     private static JsonBuilderFactory JF = Json.createBuilderFactory(null);
     
     public static String SPARQLendpoint;
     public static int port = 8080;
+    private static PasswordHasher PWH;
     
     private static HttpServer server;
     private static MessageDigest md;
@@ -97,9 +107,24 @@ public class Main {
     
     static {
         try{
+            JsonStructure root = Json.createReader(new FileInputStream(Main.class.getResource(PASSWD).getFile())).read();
+            JsonArray users = null;
+            if(root.getValue("/users").getValueType().equals(ValueType.ARRAY))
+                users = root.getValue("/users").asJsonArray();
+            else 
+                System.exit(1);
+            for(int i=0; i<users.size(); i++){
+                String email = users.get(i).asJsonObject().getValue("/email").toString();
+                String salt = users.get(i).asJsonObject().getValue("/salt").toString();
+                String passwordHash = users.get(i).asJsonObject().getValue("/passwordHash").toString();
+                User u = new User(PWH, email, salt, passwordHash);
+                EMAIL2USER.put(email, u);
+            }
+            PWH = new PasswordHasher();
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             SPARQLendpoint = (new URL("http://localhost:3030/fuseki")).toExternalForm();
             CACHED_FILES.put(INDEX,builder.parse(Main.class.getResourceAsStream(INDEX)));
+            CACHED_FILES.put(AUTH,builder.parse(Main.class.getResourceAsStream(AUTH)));
             md = MessageDigest.getInstance("SHA1");
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
@@ -132,6 +157,7 @@ public class Main {
             server = HttpServer.create(new InetSocketAddress(port),30);
             server.createContext("/", Main::handleRequest);
             server.createContext("/data", Main::handleDataRequest);
+            server.createContext("/auth", Main::handleAuthentication);
             server.start();
         }
         catch (IOException ex) {
@@ -142,9 +168,7 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
-        finally{
-            return true;
-        }
+        return true;
     }
     
     /**
@@ -155,10 +179,13 @@ public class Main {
      */
     private static void handleRequest(HttpExchange exchange) throws IOException {
         String session_id = retrieveSessionID(exchange);
+        if(session_id.equals("")) session_id = createSession(exchange);
         // Dispatch allowed request methods.
         switch(exchange.getRequestMethod()){
-            case "GET":   doGet(exchange,session_id);          break;
-            default:      exchange.sendResponseHeaders(400, 0);
+            case "GET": doGet(exchange,session_id);
+                        break;
+            default:    exchange.sendResponseHeaders(405, 0);
+                        exchange.getResponseBody().close();
         }
     }
     
@@ -171,30 +198,29 @@ public class Main {
      */
     private static void doGet(HttpExchange exchange, String session_id) throws IOException{
         String path = "/";
-        if(exchange.getRequestURI().getPath().endsWith("/")){
+        if(exchange.getRequestURI().getPath().contains("..")){
+            exchange.sendResponseHeaders(403, 0);
+            exchange.getResponseBody().close();
+            return;
+        }
+        if((exchange.getRequestURI().getPath().endsWith("/") || !exchange.getRequestURI().getPath().contains("."))
+                && !EMAIL2STATE.get(ID2USER.get(session_id).email)){
+            exchange.sendResponseHeaders(401, 0);
+            exchange.getResponseBody().close();
+            return;
+        }
+        if(exchange.getRequestURI().getPath().endsWith("/"))
             path += "www" + exchange.getRequestURI().getPath() + "index.xhtml";
-            // Send new cookie to a new client.
-            if(session_id.equals("") || !ID2MODEL_LIST.containsKey(session_id)){
-                ArrayList<String> newCookies = new ArrayList<>();
-                String hash = session_id = generateHash(Long.toString(RNG.nextLong()));
-                newCookies.add("SESSION_ID=" + hash);
-                exchange.getResponseHeaders().put("Set-Cookie", newCookies);
-                Model m = retrieveTriples(exchange,Main.class.getResource(CONSTRUCT).getFile());
-                Collection<Model> rdfCollection = new ArrayList<>();
-                rdfCollection.add(m);
-                ID2MODEL_LIST.put(hash,rdfCollection);
-                ID2POSITION.put(hash, new Position(0));
-            }
-        }
-        else if(!exchange.getRequestURI().getPath().contains(".")){
+        else if(!exchange.getRequestURI().getPath().contains("."))
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
-        }
-        else{
+        else
             path += "www" + exchange.getRequestURI().getPath();
-        }
         File file = new File(Main.class.getResource(path).getFile());
-        if(!file.exists())
+        if(!file.exists()){
             exchange.sendResponseHeaders(404, 0);
+            exchange.getResponseBody().close();
+            return;
+        }
         if(CACHED_FILES.keySet().contains(path)){
             try{
                 Document document = builder.newDocument();
@@ -257,6 +283,7 @@ public class Main {
             IOUtils.copy(is, os);
             os.close();
             is.close();
+            exchange.getResponseBody().close();
         }
     }
     
@@ -268,11 +295,17 @@ public class Main {
     private static void handleDataRequest(HttpExchange exchange){
         String session_id = retrieveSessionID(exchange);
         try{
+            if(session_id.equals("") || !EMAIL2STATE.get(ID2USER.get(session_id).email)){
+                exchange.sendResponseHeaders(401, 0);
+                exchange.getResponseBody().close();
+                return;
+            }
             switch(exchange.getRequestMethod()){
-                case "GET":    doGetData(exchange, session_id);     break;
-                case "DELETE": doDeleteData(exchange, session_id);  break;
-                case "POST":   doPostData(exchange,session_id);     break;
-                default:       exchange.sendResponseHeaders(400, 0);
+                case "GET":   doGetData(exchange, session_id);     break;
+                case "DELETE":doDeleteData(exchange, session_id);  break;
+                case "POST":  doPostData(exchange,session_id);     break;
+                default:      exchange.sendResponseHeaders(405, 0);
+                              exchange.getResponseBody().close();
             }
         }
         catch (IOException ex) {
@@ -307,6 +340,7 @@ public class Main {
         }
         if(m == null){
             exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
             return;
         }
         String json;
@@ -333,6 +367,7 @@ public class Main {
         catch(JsonException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(500, 0);
+            exchange.getResponseBody().close();
             return;
         }
         exchange.sendResponseHeaders(200, json.length());
@@ -349,11 +384,15 @@ public class Main {
     private static void doDeleteData(HttpExchange exchange, String session_id) throws IOException{
         Map<String,String> params = retrieveQueryParameters(exchange);
         if(params.containsKey("numberOfTriples") && Integer.parseInt(params.get("numberOfTriples")) == 0){
-            ID2MODEL_LIST.get(session_id).remove(ID2MODEL_LIST.get(session_id).toArray()[ID2MODEL_LIST.get(session_id).size()-1]);
+            ID2MODEL_LIST.get(session_id).remove((Model)ID2MODEL_LIST.get(session_id).toArray()[ID2MODEL_LIST.get(session_id).size()-1]);
             ID2POSITION.get(session_id).postdecrement();
             exchange.sendResponseHeaders(202, 0);
+            exchange.getResponseBody().close();
         }
-        else exchange.sendResponseHeaders(400, 0);
+        else{
+            exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
+        }
     }
     
     /**
@@ -392,15 +431,129 @@ public class Main {
             ID2POSITION.remove(session_id);
             ID2POSITION.keySet().remove(session_id);
             exchange.sendResponseHeaders(201, 0);
+            exchange.getResponseBody().close();
         }
         catch(JsonException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
         }
         catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
         }
+    }
+    
+    /**
+     * Handles client authentication.
+     * 
+     * @param exchange
+     * @throws IOException 
+     */
+    private static void handleAuthentication(HttpExchange exchange) throws IOException {
+        String session_id = retrieveSessionID(exchange);
+        boolean flag = true;
+        if(session_id.equals("")) session_id = createSession(exchange);
+        // Dispatch allowed request methods.
+        try{
+            switch(exchange.getRequestMethod()){
+                case "GET": Transformer t = TF.newTransformer();
+                            DOMSource document = new DOMSource(CACHED_FILES.get(AUTH));
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            t.transform(document, new StreamResult(os));
+                            InputStream is = new ByteArrayInputStream(os.toByteArray());
+                            exchange.sendResponseHeaders(200, is.available());
+                            t.transform(document,new StreamResult(exchange.getResponseBody()));
+                            exchange.getResponseBody().close();
+                            break;
+                case "POST":JsonReader input = Json.createReader(exchange.getRequestBody());
+                            JsonStructure root = input.read();
+                            if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
+                                if((flag = !createAccount(session_id, root, exchange))) return;
+                            boolean loginResult = login(session_id, root, exchange, flag);
+                            EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
+                            break;
+                default:    exchange.sendResponseHeaders(405, 0);
+                            exchange.getResponseBody().close();
+            }
+        }
+        catch(TransformerConfigurationException ex){
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
+        }
+        catch(TransformerException | JsonException ex){
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
+        }
+    }
+    
+    /**
+     * Create account for new user provided his credentials are syntacticly valid.
+     * 
+     * @param root
+     * @param exchange
+     * @return
+     * @throws IOException 
+     */
+    private static boolean createAccount(String session_id, JsonStructure root, HttpExchange exchange) throws IOException{
+        String email = root.getValue("/email").toString();
+        String password = root.getValue("/password").toString();
+        String repeatedPassword = root.getValue("/repeatedPassword").toString();
+        if(!validateEmailAddress(email)){
+            exchange.sendResponseHeaders(406, 0);
+            exchange.getResponseBody().close();
+            return false;
+        }
+        if(!password.equals(repeatedPassword) || EMAIL2USER.containsKey(email)){
+            exchange.sendResponseHeaders(409, 0);
+            exchange.getResponseBody().close();
+            return false;
+        }
+        String[] saltAndPasswordHash = PWH.getHash(password);
+        User user = new User(PWH,email,saltAndPasswordHash[0],saltAndPasswordHash[1]);
+        EMAIL2USER.put(email, user);
+        exchange.sendResponseHeaders(201, 0);
+        exchange.getResponseBody().close();
+        return true;
+    }
+    
+    /**
+     * Login existing user if he provided correct credentials.
+     * 
+     * @param root
+     * @param exchange
+     * @return
+     * @throws IOException 
+     */
+    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange, boolean sendHeaders) throws IOException{
+        String email = root.getValue("/email").toString();
+        String password = root.getValue("/password").toString();
+        if(!validateEmailAddress(email) || !EMAIL2USER.containsKey(email)){
+            exchange.sendResponseHeaders(404, 0);
+            exchange.getResponseBody().close();
+            return false;
+        }
+        if(!EMAIL2USER.get(email).checkPasswordHash(password)){
+            exchange.sendResponseHeaders(401, 0);
+            exchange.getResponseBody().close();
+            return false;
+        }
+        ID2USER.put(session_id, EMAIL2USER.get(email));
+        if(!ID2MODEL_LIST.containsKey(session_id)){
+            Model m = retrieveTriples(exchange,Main.class.getResource(CONSTRUCT).getFile());
+            Collection<Model> rdfCollection = new ArrayList<>();
+            rdfCollection.add(m);
+            ID2MODEL_LIST.put(session_id,rdfCollection);
+            ID2POSITION.put(session_id, new Position(0));
+        }
+        if(sendHeaders){
+            exchange.sendResponseHeaders(200, 0);
+            exchange.getResponseBody().close();
+        }
+        return true;
     }
     
     /**
@@ -436,9 +589,11 @@ public class Main {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(500, 0);
+            exchange.getResponseBody().close();
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(500, 0);
+            exchange.getResponseBody().close();
         }
         return m;
     }
@@ -451,11 +606,14 @@ public class Main {
      */
     private static String retrieveSessionID(HttpExchange exchange) {
         Headers h = exchange.getRequestHeaders();
+        String session_id = "";
         if(h.containsKey("Cookie"))
             for(String cookie : h.get("Cookie"))
-                if(cookie.startsWith("SESSION_ID="))
-                    return cookie.split("=")[1];
-        return "";
+                if(!session_id.equals("") && cookie.startsWith("SESSION_ID=") && EMAIL2STATE.get(ID2USER.get(cookie.split("=")[1]).email))
+                    session_id = cookie.split("=")[1];
+                else if(session_id.equals("") && cookie.startsWith("SESSION_ID="))
+                    session_id = cookie.split("=")[1];
+        return session_id;
     }
 
     /**
@@ -474,5 +632,46 @@ public class Main {
             }
         }
         return params;
+    }
+    
+    /**
+     * Creates a new session ID, puts it into the header and returns it as a string.
+     * 
+     * @param exchange
+     * @return 
+     */
+    private static String createSession(HttpExchange exchange){
+        String hash = generateHash(Long.toString(RNG.nextLong()));
+        setSessionCookie(hash, exchange);
+        return hash;
+    }
+
+    /**
+     * Set session ID as a cookie.
+     * 
+     * @param session_id
+     * @param exchange 
+     */
+    private static void setSessionCookie(String session_id, HttpExchange exchange) {
+        ArrayList<String> newCookies = new ArrayList<>();
+        newCookies.add("SESSION_ID=" + session_id);
+        exchange.getResponseHeaders().put("Set-Cookie", newCookies);
+    }
+    
+    /**
+     * Checks whether the provided email address is valid.
+     * 
+     * @param email
+     * @return 
+     */
+    private static boolean validateEmailAddress(String email){
+        try {
+            InternetAddress address = new InternetAddress(email);
+            address.validate();
+        } catch (AddressException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
     }
 }
