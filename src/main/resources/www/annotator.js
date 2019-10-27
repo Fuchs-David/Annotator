@@ -48,8 +48,8 @@ getData.onreadystatechange = function(){
             for(var i=0;i<triples.length;i++){
                 let triple = triples[i];
                 let row = data.insertRow(-1);
-                row.insertCell(0).innerHTML=triple.predicate;
-                row.insertCell(1).innerHTML=triple.object;
+                row.insertCell(0).innerText=triple.predicate;
+                row.insertCell(1).innerText=triple.object;
             }
         }
         catch(Exception){
