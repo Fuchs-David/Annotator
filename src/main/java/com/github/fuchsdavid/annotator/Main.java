@@ -112,9 +112,9 @@ public class Main {
             else 
                 System.exit(1);
             for(int i=0; i<users.size(); i++){
-                String email = users.get(i).asJsonObject().getValue("/email").toString();
-                String salt = users.get(i).asJsonObject().getValue("/salt").toString();
-                String passwordHash = users.get(i).asJsonObject().getValue("/passwordHash").toString();
+                String email = users.get(i).asJsonObject().getValue("/email").toString().replace("\"", "");
+                String salt = users.get(i).asJsonObject().getValue("/salt").toString().replace("\"", "");
+                String passwordHash = users.get(i).asJsonObject().getValue("/passwordHash").toString().replace("\"", "");
                 User u = new User(PWH, email, salt, passwordHash);
                 EMAIL2USER.put(email, u);
             }
@@ -409,11 +409,11 @@ public class Main {
             JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
             StringBuilder sb = new StringBuilder();
             sb.append("INSERT DATA {\n");
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString()); i++)
+            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
                 sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n");
             sb.append("}");
             ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString()); i++){
+            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
                 JsonValue annotation = annotations.get(i);
                 pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
                 switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
@@ -489,6 +489,11 @@ public class Main {
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
+        catch(Exception ex){
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
+        }
     }
     
     /**
@@ -500,9 +505,9 @@ public class Main {
      * @throws IOException 
      */
     private static boolean createAccount(String session_id, JsonStructure root, HttpExchange exchange) throws IOException{
-        String email = root.getValue("/email").toString();
-        String password = root.getValue("/password").toString();
-        String repeatedPassword = root.getValue("/repeatedPassword").toString();
+        String email = root.getValue("/email").toString().replace("\"", "");
+        String password = root.getValue("/password").toString().replace("\"", "");
+        String repeatedPassword = root.getValue("/repeatedPassword").toString().replace("\"", "");
         if(!validateEmailAddress(email)){
             exchange.sendResponseHeaders(406, 0);
             exchange.getResponseBody().close();
@@ -530,8 +535,8 @@ public class Main {
      * @throws IOException 
      */
     private static boolean login(String session_id, JsonStructure root, HttpExchange exchange, boolean sendHeaders) throws IOException{
-        String email = root.getValue("/email").toString();
-        String password = root.getValue("/password").toString();
+        String email = root.getValue("/email").toString().replace("\"", "");
+        String password = root.getValue("/password").toString().replace("\"", "");
         if(!validateEmailAddress(email) || !EMAIL2USER.containsKey(email)){
             exchange.sendResponseHeaders(404, 0);
             exchange.getResponseBody().close();
