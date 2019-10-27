@@ -19,14 +19,10 @@ package com.github.fuchsdavid.annotator;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,6 +41,7 @@ import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonException;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
@@ -107,7 +104,8 @@ public class Main {
     
     static {
         try{
-            JsonStructure root = Json.createReader(new FileInputStream(Main.class.getResource(PASSWD).getFile())).read();
+            PWH = new PasswordHasher();
+            JsonStructure root = Json.createReader(Main.class.getResourceAsStream(PASSWD)).read();
             JsonArray users = null;
             if(root.getValue("/users").getValueType().equals(ValueType.ARRAY))
                 users = root.getValue("/users").asJsonArray();
@@ -120,12 +118,25 @@ public class Main {
                 User u = new User(PWH, email, salt, passwordHash);
                 EMAIL2USER.put(email, u);
             }
-            PWH = new PasswordHasher();
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             SPARQLendpoint = (new URL("http://localhost:3030/fuseki")).toExternalForm();
             CACHED_FILES.put(INDEX,builder.parse(Main.class.getResourceAsStream(INDEX)));
             CACHED_FILES.put(AUTH,builder.parse(Main.class.getResourceAsStream(AUTH)));
             md = MessageDigest.getInstance("SHA1");
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                final JsonArrayBuilder u = Json.createArrayBuilder();
+                EMAIL2USER.values().forEach((User user) -> {
+                    u.add(user.serialize());
+                });
+                JsonObject r = Json.createObjectBuilder().add("users", u.build()).build();
+                try {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    Main.class.getResourceAsStream(PASSWD).transferTo(os);
+                    Json.createWriter(os).write(r);
+                } catch (IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }));
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -215,12 +226,6 @@ public class Main {
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         else
             path += "www" + exchange.getRequestURI().getPath();
-        File file = new File(Main.class.getResource(path).getFile());
-        if(!file.exists()){
-            exchange.sendResponseHeaders(404, 0);
-            exchange.getResponseBody().close();
-            return;
-        }
         if(CACHED_FILES.keySet().contains(path)){
             try{
                 Document document = builder.newDocument();
@@ -260,11 +265,9 @@ public class Main {
                 Transformer t = TF.newTransformer();
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 t.transform(new DOMSource(document), new StreamResult(os));
-                InputStream is = new ByteArrayInputStream(os.toByteArray());
-                exchange.sendResponseHeaders(200, is.available());
-                t.transform(new DOMSource(document), new StreamResult(exchange.getResponseBody()));
+                exchange.sendResponseHeaders(200, os.size());
+                exchange.getResponseBody().write(os.toByteArray());
                 os.close();
-                is.close();
                 exchange.getResponseBody().close();
             }
             catch(TransformerConfigurationException ex){
@@ -277,13 +280,11 @@ public class Main {
             }
         }
         else{
-            InputStream is = new FileInputStream(file);
-            OutputStream os = exchange.getResponseBody();
+            InputStream is = Main.class.getResourceAsStream(path);
             exchange.sendResponseHeaders(200, is.available());
-            IOUtils.copy(is, os);
-            os.close();
+            is.transferTo(exchange.getResponseBody());
             is.close();
-            exchange.getResponseBody().close();
+            is.close();
         }
     }
     
@@ -326,7 +327,7 @@ public class Main {
         switch(params.get("direction")){
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
-                    m = retrieveTriples(exchange,Main.class.getResource(CONSTRUCT).getFile());
+                    m = retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT));
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
@@ -462,9 +463,9 @@ public class Main {
                             DOMSource document = new DOMSource(CACHED_FILES.get(AUTH));
                             ByteArrayOutputStream os = new ByteArrayOutputStream();
                             t.transform(document, new StreamResult(os));
-                            InputStream is = new ByteArrayInputStream(os.toByteArray());
-                            exchange.sendResponseHeaders(200, is.available());
-                            t.transform(document,new StreamResult(exchange.getResponseBody()));
+                            exchange.sendResponseHeaders(200, os.size());
+                            exchange.getResponseBody().write(os.toByteArray());
+                            os.close();
                             exchange.getResponseBody().close();
                             break;
                 case "POST":JsonReader input = Json.createReader(exchange.getRequestBody());
@@ -543,7 +544,7 @@ public class Main {
         }
         ID2USER.put(session_id, EMAIL2USER.get(email));
         if(!ID2MODEL_LIST.containsKey(session_id)){
-            Model m = retrieveTriples(exchange,Main.class.getResource(CONSTRUCT).getFile());
+            Model m = retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT));
             Collection<Model> rdfCollection = new ArrayList<>();
             rdfCollection.add(m);
             ID2MODEL_LIST.put(session_id,rdfCollection);
@@ -577,11 +578,10 @@ public class Main {
      * @param file
      * @return 
      */
-    private static Model retrieveTriples(HttpExchange exchange,String file) throws IOException{
+    private static Model retrieveTriples(HttpExchange exchange,InputStream file) throws IOException{
         Model m = null;
         try {
-            FileInputStream f = new FileInputStream(new File(file));
-            ParameterizedSparqlString pss = new ParameterizedSparqlString(IOUtils.toString(f, StandardCharsets.UTF_8.name()));
+            ParameterizedSparqlString pss = new ParameterizedSparqlString(IOUtils.toString(file, StandardCharsets.UTF_8.name()));
             pss.setLiteral("offset", offset++);
             pss.setLiteral("limit", 1);
             Query query = pss.asQuery();

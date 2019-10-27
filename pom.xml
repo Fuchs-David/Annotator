@@ -3,22 +3,69 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Fuchs-David</groupId>
     <artifactId>Annotator</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>Annotator</name>
+    <url>https://github.com/Fuchs-David/Annotator</url>
+    <inceptionYear>2019</inceptionYear>
+    <licenses>
+        <license>
+            <name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     
     <build>
+      <defaultGoal>jar</defaultGoal>
+      <directory>${basedir}/target</directory>
+      <finalName>Annotator-${project.version}</finalName>
       <sourceDirectory>src/main/java</sourceDirectory>
       <resources>
         <resource>
           <directory>src/main/resources</directory>
         </resource>
       </resources>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addClasspath>true</addClasspath>
+                <mainClass>com.github.fuchsdavid.annotator.Main</mainClass>
+              </manifest>
+            </archive>
+            <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+            </descriptorRefs>
+          </configuration>
+          <executions>
+              <execution>
+                  <id>make-assembly</id>
+                  <phase>package</phase>
+                  <goals>
+                      <goal>
+                          single
+                      </goal>
+                  </goals>
+              </execution>
+          </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+        </plugin>
+      </plugins>
     </build>
     
-    <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>13</maven.compiler.source>
+        <maven.compiler.target>13</maven.compiler.target>
     </properties>
     <dependencies>
         
@@ -27,7 +74,7 @@
         <groupId>org.apache.jena</groupId>
         <artifactId>apache-jena-libs</artifactId>
         <type>pom</type>
-        <version>3.12.0</version>
+        <version>3.13.1</version>
       </dependency>
       
       <!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
@@ -48,7 +95,14 @@
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
-            <version>1.4</version>
+            <version>1.4.7</version>
+        </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.28</version>
         </dependency>
         
         <!-- Test dependencies -->
@@ -56,21 +110,21 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.3.1</version>
+            <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
         
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>5.3.1</version>
+            <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
         
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.3.1</version>
+            <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
