@@ -155,7 +155,7 @@ public class Main {
      */
     public static void main(String[] args){
         Argument.parseArguments(args);
-        if(!runHTTPServer()) System.exit(1);
+        if(runHTTPServer() == null) System.exit(1);
     }
 
     /**
@@ -163,7 +163,8 @@ public class Main {
      * 
      * @return
      */
-    public static boolean runHTTPServer() {
+    public static HttpServer runHTTPServer() {
+        HttpServer server = null;
         try {
             server = HttpServer.create(new InetSocketAddress(port),30);
             server.createContext("/", Main::handleRequest);
@@ -173,13 +174,15 @@ public class Main {
         }
         catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
+            server = null;
         }
         catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
+            server = null;
         }
-        return true;
+        finally{
+            return server;
+        }
     }
     
     /**
