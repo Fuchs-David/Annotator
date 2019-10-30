@@ -59,6 +59,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -103,6 +104,7 @@ public class Main {
     private static int offset = 0;
     
     static {
+        ARQ.init();
         try{
             PWH = new PasswordHasher();
             JsonStructure root = Json.createReader(Main.class.getResourceAsStream(PASSWD)).read();
@@ -283,6 +285,10 @@ public class Main {
             }
         }
         else{
+            if(path.endsWith("css"))
+                exchange.getResponseHeaders().add("content-type", "text/css");
+            else if(path.endsWith("js"))
+                exchange.getResponseHeaders().add("content-type", "text/javascript+module");
             InputStream is = Main.class.getResourceAsStream(path);
             exchange.sendResponseHeaders(200, is.available());
             is.transferTo(exchange.getResponseBody());
@@ -409,38 +415,51 @@ public class Main {
         JsonReader input = Json.createReader(exchange.getRequestBody());
         JsonStructure topLevelObject = input.read();
         try{
-            JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
-            StringBuilder sb = new StringBuilder();
-            sb.append("INSERT DATA {\n");
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
-                sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n");
-            sb.append("}");
-            ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
-                JsonValue annotation = annotations.get(i);
-                pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
-                switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
-                    case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
-                    case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;
-                    case "Manifestation":pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Manifestation")); break;
-                    case "Expression":   pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Expression"));    break;
-                    default: throw new Exception("Illegal concept suggested by the client.");
+            Thread t = new Thread(() -> {
+                try{
+                    JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n");
+                    sb.append("INSERT DATA {\n");
+                    for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
+                        sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n")
+                          .append("?subject").append(i).append(" <annotatedBy> [").append(" foaf:mbox ?mbox ").append("] .\n");
+                    sb.append("}");
+                    ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
+                    pss.setIri("mbox", "mailto:" + ID2USER.get(session_id).email);
+                    for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
+                        JsonValue annotation = annotations.get(i);
+                        pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
+                        switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
+                            case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
+                            case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;
+                            case "Manifestation":pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Manifestation")); break;
+                            case "Expression":   pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Expression"));    break;
+                            default: throw new Exception("Illegal concept suggested by the client.");
+                        }
+                    }
+                    UpdateRequest update = pss.asUpdate();
+                    UpdateExecutionFactory.createRemote(update, SPARQLendpoint).execute();
                 }
-            }
-            System.out.println(pss);
-            UpdateRequest update = pss.asUpdate();
-            UpdateExecutionFactory.createRemote(update, SPARQLendpoint).execute();
+                catch(Exception ex){
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
             ID2MODEL_LIST.remove(session_id);
             ID2MODEL_LIST.keySet().remove(session_id);
             ID2POSITION.remove(session_id);
             ID2POSITION.keySet().remove(session_id);
             exchange.sendResponseHeaders(201, 0);
             exchange.getResponseBody().close();
+            t.join();
         }
         catch(JsonException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
+        }
+        catch(InterruptedException ex){
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -476,7 +495,8 @@ public class Main {
                             if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
                                 if((flag = !createAccount(session_id, root, exchange))) return;
                             boolean loginResult = login(session_id, root, exchange, flag);
-                            EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
+                            if(loginResult)
+                                EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
                             break;
                 default:    exchange.sendResponseHeaders(405, 0);
                             exchange.getResponseBody().close();
