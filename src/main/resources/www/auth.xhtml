@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             When you create your account or log into an existing account, you can
             start annotating the DBpedia dataset at <a href="/">main page</a>.
         </p>
-        <form method="POST">
+        <form>
             <div>
                 <input type="checkbox" name="createAccount" id="createAccount"
                        onclick="(document.getElementById('hide').style.display === 'none' ? document.getElementById('hide').style.display = 'block' : document.getElementById('hide').style.display = 'none')"/>
@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <div id="hide" style="display: none;">
                 <label for="repeatedPassword">Repeat password:</label><input type="password" name="repeatedPassword" id="repeatedPassword"/>
             </div>
-            <input type="submit" name="submit" id="submit" value="Submit" onclick="submitCredentials()"/>
+            <input type="button" name="submit" id="submit" value="Submit" onclick="submitCredentials()"/>
         </form>
     </body>
 </html>
