@@ -423,7 +423,7 @@ public class Main {
                     sb.append("INSERT DATA {\n");
                     for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
                         sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n")
-                          .append("?subject").append(i).append(" <annotatedBy> [").append(" foaf:mbox ?mbox ").append("] .\n");
+                          .append("?subject").append(i).append(" <annotatedBy>").append(" foaf:mbox ?mbox").append(" .\n");
                     sb.append("}");
                     ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
                     pss.setIri("mbox", "mailto:" + ID2USER.get(session_id).email);
