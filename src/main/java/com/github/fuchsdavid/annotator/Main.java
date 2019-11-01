@@ -231,7 +231,7 @@ public class Main {
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         else
             path += "www" + exchange.getRequestURI().getPath();
-        if(CACHED_FILES.keySet().contains(path)){
+        if(exchange.getRequestURI().getPath().equals("/")){
             try{
                 Document document = builder.newDocument();
                 Node root = CACHED_FILES.get(path).getDocumentElement().cloneNode(true);
@@ -242,25 +242,8 @@ public class Main {
                 document.adoptNode(root);
                 document.appendChild(root);
                 document.insertBefore(document.createComment(license), root);
-                
-                final Node tbody = document.getElementsByTagName("tbody").item(0);
-                final Node caption = document.getElementsByTagName("caption").item(0);
                 if(ID2MODEL_LIST.get(session_id).size() > ID2POSITION.get(session_id).getPosition()){
-                    final Model m = (Model)(ID2MODEL_LIST.get(session_id).toArray()[ID2POSITION.get(session_id).getPosition()]);
-                    final Node c = document.createElement("strong");
-                    c.appendChild(document.createTextNode("You are currently annotating resource:"));
-                    caption.appendChild(c);
-                    caption.appendChild(document.createTextNode(" <" + m.listSubjects().next().getURI() + ">"));
-                    m.listStatements().forEachRemaining(statement -> {
-                        Node tr = tbody.appendChild(document.createElement("tr"));
-                        Node p = tr.appendChild(document.createElement("td"));
-                        p.setTextContent(statement.getPredicate().getURI());
-                        Node o = tr.appendChild(document.createElement("td"));
-                        if(statement.getObject().isResource())
-                            o.setTextContent(statement.getObject().toString());
-                        else
-                            o.setTextContent(statement.getObject().asLiteral().getLexicalForm());
-                    });
+                    fillTable(session_id, document);
                 }
                 else{
                     Node p = document.createElement("p");
@@ -268,11 +251,11 @@ public class Main {
                     p.setTextContent("There are no records to show.");
                 }
                 Transformer t = TF.newTransformer();
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                t.transform(new DOMSource(document), new StreamResult(os));
-                exchange.sendResponseHeaders(200, os.size());
-                exchange.getResponseBody().write(os.toByteArray());
-                os.close();
+                try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                    t.transform(new DOMSource(document), new StreamResult(os));
+                    exchange.sendResponseHeaders(200, os.size());
+                    exchange.getResponseBody().write(os.toByteArray());
+                }
                 exchange.getResponseBody().close();
             }
             catch(TransformerConfigurationException ex){
@@ -285,16 +268,44 @@ public class Main {
             }
         }
         else{
-            if(path.endsWith("css"))
-                exchange.getResponseHeaders().add("content-type", "text/css");
-            else if(path.endsWith("js"))
-                exchange.getResponseHeaders().add("content-type", "text/javascript+module");
-            InputStream is = Main.class.getResourceAsStream(path);
-            exchange.sendResponseHeaders(200, is.available());
-            is.transferTo(exchange.getResponseBody());
-            is.close();
-            is.close();
+            String[] ext = path.split("\\.");
+            switch(ext[ext.length-1]){
+                case "css": exchange.getResponseHeaders().add("content-type", "text/css");               break;
+                case "js":  exchange.getResponseHeaders().add("content-type", "text/javascript+module"); break;
+            }
+            try (InputStream is = Main.class.getResourceAsStream(path)) {
+                exchange.sendResponseHeaders(200, is.available());
+                is.transferTo(exchange.getResponseBody());
+            }
+            exchange.getResponseBody().close();
         }
+    }
+
+    /**
+     * Fill table with triples in a model.
+     * 
+     * @param session_id
+     * @param document
+     * @throws DOMException 
+     */
+    private static void fillTable(String session_id, Document document) throws DOMException {
+        final Node tbody = document.getElementsByTagName("tbody").item(0);
+        final Node caption = document.getElementsByTagName("caption").item(0);
+        final Model m = (Model)(ID2MODEL_LIST.get(session_id).toArray()[ID2POSITION.get(session_id).getPosition()]);
+        final Node c = document.createElement("strong");
+        c.appendChild(document.createTextNode("You are currently annotating resource:"));
+        caption.appendChild(c);
+        caption.appendChild(document.createTextNode(" <" + m.listSubjects().next().getURI() + ">"));
+        m.listStatements().forEachRemaining(statement -> {
+            Node tr = tbody.appendChild(document.createElement("tr"));
+            Node p = tr.appendChild(document.createElement("td"));
+            p.setTextContent(statement.getPredicate().getURI());
+            Node o = tr.appendChild(document.createElement("td"));
+            if(statement.getObject().isResource())
+                o.setTextContent(statement.getObject().toString());
+            else
+                o.setTextContent(statement.getObject().asLiteral().getLexicalForm());
+        });
     }
     
     /**
