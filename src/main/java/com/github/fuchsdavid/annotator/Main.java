@@ -20,7 +20,9 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -80,7 +82,7 @@ import org.xml.sax.SAXException;
 public class Main {
     private static final String INDEX = "/www/index.xhtml";
     private static final String AUTH = "/www/auth.xhtml";
-    private static final String PASSWD = "/security/auth.json";
+    private static final String PASSWD = "./security/auth.json";
     private static final String CONSTRUCT = "/sparql/construct.sparql";
     private static final Random RNG = new Random();
     
@@ -107,7 +109,7 @@ public class Main {
         ARQ.init();
         try{
             PWH = new PasswordHasher();
-            JsonStructure root = Json.createReader(Main.class.getResourceAsStream(PASSWD)).read();
+            JsonStructure root = Json.createReader(new FileInputStream(PASSWD)).read();
             JsonArray users = null;
             if(root.getValue("/users").getValueType().equals(ValueType.ARRAY))
                 users = root.getValue("/users").asJsonArray();
@@ -132,9 +134,7 @@ public class Main {
                 });
                 JsonObject r = Json.createObjectBuilder().add("users", u.build()).build();
                 try {
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    Main.class.getResourceAsStream(PASSWD).transferTo(os);
-                    Json.createWriter(os).write(r);
+                    Json.createWriter(new FileOutputStream(PASSWD)).write(r);
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -415,43 +415,35 @@ public class Main {
         JsonReader input = Json.createReader(exchange.getRequestBody());
         JsonStructure topLevelObject = input.read();
         try{
-            Thread t = new Thread(() -> {
-                try{
-                    JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n");
-                    sb.append("INSERT DATA {\n");
-                    for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
-                        sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n")
-                          .append("?subject").append(i).append(" <annotatedBy>").append(" foaf:mbox ?mbox").append(" .\n");
-                    sb.append("}");
-                    ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
-                    pss.setIri("mbox", "mailto:" + ID2USER.get(session_id).email);
-                    for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
-                        JsonValue annotation = annotations.get(i);
-                        pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
-                        switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
-                            case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
-                            case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;
-                            case "Manifestation":pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Manifestation")); break;
-                            case "Expression":   pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Expression"));    break;
-                            default: throw new Exception("Illegal concept suggested by the client.");
-                        }
-                    }
-                    UpdateRequest update = pss.asUpdate();
-                    UpdateExecutionFactory.createRemote(update, SPARQLendpoint).execute();
+            JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
+            StringBuilder sb = new StringBuilder();
+            sb.append("PREFIX an: <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>\n");
+            sb.append("INSERT DATA {\n");
+            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
+                sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n")
+                  .append("?subject").append(i).append(" an:annotatedBy").append(" ?mbox").append(" .\n");
+            sb.append("}");
+            ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
+            pss.setIri("mbox", ID2USER.get(session_id).email);
+            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
+                JsonValue annotation = annotations.get(i);
+                pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
+                switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
+                    case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
+                    case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;
+                    case "Manifestation":pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Manifestation")); break;
+                    case "Expression":   pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Expression"));    break;
+                    default: throw new Exception("Illegal concept suggested by the client.");
                 }
-                catch(Exception ex){
-                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            });
+            }
+            UpdateRequest update = pss.asUpdate();
+            UpdateExecutionFactory.createRemote(update, SPARQLendpoint).execute();
             ID2MODEL_LIST.remove(session_id);
             ID2MODEL_LIST.keySet().remove(session_id);
             ID2POSITION.remove(session_id);
             ID2POSITION.keySet().remove(session_id);
             exchange.sendResponseHeaders(201, 0);
             exchange.getResponseBody().close();
-            t.join();
         }
         catch(JsonException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
