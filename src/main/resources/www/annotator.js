@@ -63,9 +63,11 @@ getData.onreadystatechange = function(){
     }
 };
 
-sendData.onreadystatechange = new function(){
+sendData.onreadystatechange = function(){
     if(getData.readyState === XMLHttpRequest.DONE && getData.status === 201){
         alert("Data have been successfully uploaded to the server.");
+        window.sessionStorage.clear();
+        location.reload(true);
     }
 };
 
@@ -102,6 +104,4 @@ function submitData(){
     sendData.open("POST","data");
     sendData.setRequestHeader("Content-Type", "application/json");
     sendData.send(JSON.stringify(data));
-    window.sessionStorage.clear();
-    location.reload(true);
 }
