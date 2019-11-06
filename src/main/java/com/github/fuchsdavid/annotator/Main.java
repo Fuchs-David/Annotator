@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.json.Json;
@@ -66,6 +67,8 @@ import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.w3c.dom.DOMException;
@@ -84,6 +87,7 @@ public class Main {
     private static final String AUTH = "/www/auth.xhtml";
     private static final String PASSWD = "./security/auth.json";
     private static final String CONSTRUCT = "/sparql/construct.sparql";
+    private static final String PREFIXES = "/config/known_prefixes.conf";
     private static final Random RNG = new Random();
     
     private static final Map<String,Collection<Model>> ID2MODEL_LIST = new HashMap<>();
@@ -92,6 +96,8 @@ public class Main {
     private static final Map<String,User> ID2USER = new HashMap<>();
     private static final Map<String,User> EMAIL2USER = new HashMap<>();
     private static final Map<String,Document> CACHED_FILES = new HashMap<>();
+    
+    private static final PrefixMapping PM = PrefixMapping.Factory.create();
     
     private static final TransformerFactory TF = TransformerFactory.newInstance();
     private static JsonBuilderFactory JF = Json.createBuilderFactory(null);
@@ -139,12 +145,22 @@ public class Main {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }));
+            Scanner scanner = new Scanner(Main.class.getResourceAsStream(PREFIXES));
+            while(scanner.hasNextLine()){
+                String[] line = scanner.nextLine().split("\\t");
+                if(line.length != 2)
+                    throw new Exception("Failed to parse prefix list");
+                PM.setNsPrefix(line[0], new URL(line[1]).toExternalForm());
+            }
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1);
         }
         catch (IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(1);
+        } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1);
         }
@@ -183,7 +199,7 @@ public class Main {
             server = null;
         }
         finally{
-            return server;
+            return Main.server = server;
         }
     }
     
@@ -295,14 +311,14 @@ public class Main {
         final Node c = document.createElement("strong");
         c.appendChild(document.createTextNode("You are currently annotating resource:"));
         caption.appendChild(c);
-        caption.appendChild(document.createTextNode(" <" + m.listSubjects().next().getURI() + ">"));
+        caption.appendChild(document.createTextNode(" " + getPrefixedName(m.listSubjects().next())));
         m.listStatements().forEachRemaining(statement -> {
             Node tr = tbody.appendChild(document.createElement("tr"));
             Node p = tr.appendChild(document.createElement("td"));
-            p.setTextContent(statement.getPredicate().getURI());
+            p.setTextContent(getPrefixedName(statement.getPredicate()));
             Node o = tr.appendChild(document.createElement("td"));
             if(statement.getObject().isResource())
-                o.setTextContent(statement.getObject().toString());
+                o.setTextContent(getPrefixedName(statement.getObject().asResource()));
             else
                 o.setTextContent(statement.getObject().asLiteral().getLexicalForm());
         });
@@ -369,18 +385,14 @@ public class Main {
             JsonObjectBuilder object = JF.createObjectBuilder();
             JsonArrayBuilder array = JF.createArrayBuilder();
             m.listStatements().forEachRemaining(statement -> {
+                JsonObjectBuilder createTriple = JF.createObjectBuilder()
+                    .add("subject",getPrefixedName(statement.getSubject()));
+                createTriple.add("predicate", getPrefixedName(statement.getPredicate()));
                 if(statement.getObject().isResource())
-                    array.add(JF.createObjectBuilder()
-                        .add("subject",  statement.getSubject().toString())
-                        .add("predicate",statement.getPredicate().toString())
-                        .add("object",   statement.getObject().toString())
-                        .build());
+                    createTriple.add("object", getPrefixedName(statement.getObject().asResource()));
                 else
-                    array.add(JF.createObjectBuilder()
-                        .add("subject",  statement.getSubject().toString())
-                        .add("predicate",statement.getPredicate().toString())
-                        .add("object",  statement.getObject().asLiteral().getLexicalForm())
-                        .build());
+                    createTriple.add("object",statement.getObject().asLiteral().getLexicalForm());
+                array.add(createTriple.build());
             });
             object.add("triples", array);
             json = object.build().toString();
@@ -617,6 +629,7 @@ public class Main {
             pss.setLiteral("limit", 1);
             Query query = pss.asQuery();
             m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
+            m.setNsPrefixes(PM);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(500, 0);
@@ -627,6 +640,17 @@ public class Main {
             exchange.getResponseBody().close();
         }
         return m;
+    }
+    
+    /**
+     * Get prefixed name of a URI resource.
+     * 
+     * @param resource
+     * @return 
+     */
+    private static String getPrefixedName(Resource resource){
+        String prefix = PM.getNsURIPrefix(resource.getNameSpace());
+        return (prefix == null ? resource.getURI() : prefix + ":" + resource.getLocalName());
     }
 
     /**

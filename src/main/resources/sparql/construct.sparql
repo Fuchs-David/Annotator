@@ -4,6 +4,7 @@ CONSTRUCT {
 }
 WHERE {
   ?dbr owl:sameAs ?wdr.
+  FILTER (!isBlank(?dbr)).
   {
     SELECT ?dbr ?wdr
     WHERE {
@@ -17,5 +18,6 @@ WHERE {
   SERVICE <http://dbpedia.org/sparql> {
     ?dbr ?dbp ?dbo.
     FILTER(!strstarts(str(?dbo),"http://www.wikidata.org/")&&!strstarts(str(?dbo),"http://wikidata.dbpedia.org/")).
+    FILTER (!isBlank(?dbo)).
   }
 }

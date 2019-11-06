@@ -43,7 +43,7 @@ getData.onreadystatechange = function(){
         let tbody = data.getElementsByTagName("tbody").item(0);
         data.removeChild(thead);
         data.removeChild(tbody);
-        data.getElementsByTagName("caption").item(0).innerHTML="<strong>You are currently annotating resource:</strong> &lt;" + triples[0].subject + "&gt;";
+        data.getElementsByTagName("caption").item(0).innerHTML="<strong>You are currently annotating resource:</strong> " + triples[0].subject;
         try{
             for(var i=0;i<triples.length;i++){
                 let triple = triples[i];
