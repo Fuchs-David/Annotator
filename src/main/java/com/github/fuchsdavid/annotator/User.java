@@ -16,6 +16,8 @@
  */
 package com.github.fuchsdavid.annotator;
 
+import java.util.Base64;
+import java.util.Base64.Encoder;
 import javax.json.Json;
 import javax.json.JsonObject;
 
@@ -25,6 +27,7 @@ import javax.json.JsonObject;
  * @author David Fuchs
  */
 public class User {
+    private static final Encoder B64E = Base64.getEncoder();
     public final String email;
     
     private final PasswordHasher PWH;
@@ -38,12 +41,13 @@ public class User {
      * @param email
      * @param salt
      * @param passwordHash 
+     * @param b64Hash 
      */
-    public User(PasswordHasher PWH, String email, String salt, String passwordHash){
+    public User(PasswordHasher PWH, String email, String salt, String passwordHash, boolean b64Hash){
         this.PWH = PWH;
         this.email = email;
         this.salt = salt;
-        this.passwordHash = passwordHash;
+        this.passwordHash = (b64Hash ? passwordHash : B64E.encodeToString(passwordHash.getBytes()));
     }
     
     /**
@@ -53,7 +57,7 @@ public class User {
      * @return 
      */
     public boolean checkPasswordHash(String password){
-        return this.passwordHash.equals(PWH.getHash(salt, password));
+        return this.passwordHash.equals(B64E.encodeToString(PWH.getHash(salt, password).getBytes()));
     }
     
     /**

@@ -119,7 +119,7 @@ public class Main {
                 String email = users.get(i).asJsonObject().getValue("/email").toString().replace("\"", "");
                 String salt = users.get(i).asJsonObject().getValue("/salt").toString().replace("\"", "");
                 String passwordHash = users.get(i).asJsonObject().getValue("/passwordHash").toString().replace("\"", "");
-                User u = new User(PWH, email, salt, passwordHash);
+                User u = new User(PWH, email, salt, passwordHash,true);
                 EMAIL2USER.put(email, u);
             }
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -496,7 +496,7 @@ public class Main {
                 case "POST":JsonReader input = Json.createReader(exchange.getRequestBody());
                             JsonStructure root = input.read();
                             if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
-                                if((flag = !createAccount(session_id, root, exchange))) return;
+                                if((flag = !createAccount(root, exchange))) return;
                             boolean loginResult = login(session_id, root, exchange, flag);
                             if(loginResult)
                                 EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
@@ -530,7 +530,7 @@ public class Main {
      * @return
      * @throws IOException 
      */
-    private static boolean createAccount(String session_id, JsonStructure root, HttpExchange exchange) throws IOException{
+    private static boolean createAccount(JsonStructure root, HttpExchange exchange) throws IOException{
         String email = root.getValue("/email").toString().replace("\"", "");
         String password = root.getValue("/password").toString().replace("\"", "");
         String repeatedPassword = root.getValue("/repeatedPassword").toString().replace("\"", "");
@@ -545,7 +545,7 @@ public class Main {
             return false;
         }
         String[] saltAndPasswordHash = PWH.getHash(password);
-        User user = new User(PWH,email,saltAndPasswordHash[0],saltAndPasswordHash[1]);
+        User user = new User(PWH,email,saltAndPasswordHash[0],saltAndPasswordHash[1],false);
         EMAIL2USER.put(email, user);
         exchange.sendResponseHeaders(201, 0);
         exchange.getResponseBody().close();
