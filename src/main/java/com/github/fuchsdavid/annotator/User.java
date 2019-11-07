@@ -30,7 +30,6 @@ public class User {
     private static final Encoder B64E = Base64.getEncoder();
     public final String email;
     
-    private final PasswordHasher PWH;
     private final String salt;
     private final String passwordHash;
     
@@ -43,8 +42,7 @@ public class User {
      * @param passwordHash 
      * @param b64Hash 
      */
-    public User(PasswordHasher PWH, String email, String salt, String passwordHash, boolean b64Hash){
-        this.PWH = PWH;
+    public User(String email, String salt, String passwordHash, boolean b64Hash){
         this.email = email;
         this.salt = salt;
         this.passwordHash = (b64Hash ? passwordHash : B64E.encodeToString(passwordHash.getBytes()));
@@ -57,7 +55,7 @@ public class User {
      * @return 
      */
     public boolean checkPasswordHash(String password){
-        return this.passwordHash.equals(B64E.encodeToString(PWH.getHash(salt, password).getBytes()));
+        return this.passwordHash.equals(B64E.encodeToString(Main.PWH.getHash(salt, password).getBytes()));
     }
     
     /**

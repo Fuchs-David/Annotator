@@ -97,7 +97,7 @@ public class Main {
                 String email = users.get(i).asJsonObject().getValue("/email").toString().replace("\"", "");
                 String salt = users.get(i).asJsonObject().getValue("/salt").toString().replace("\"", "");
                 String passwordHash = users.get(i).asJsonObject().getValue("/passwordHash").toString().replace("\"", "");
-                User u = new User(PWH, email, salt, passwordHash,true);
+                User u = new User(email, salt, passwordHash,true);
                 EMAIL2USER.put(email, u);
             }
             DOCUMENT_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();

@@ -450,7 +450,7 @@ public class HTTPServerUtils {
             return false;
         }
         String[] saltAndPasswordHash = PWH.getHash(password);
-        User user = new User(PWH,email,saltAndPasswordHash[0],saltAndPasswordHash[1],false);
+        User user = new User(email,saltAndPasswordHash[0],saltAndPasswordHash[1],false);
         EMAIL2USER.put(email, user);
         exchange.sendResponseHeaders(201, 0);
         exchange.getResponseBody().close();
