@@ -16,7 +16,9 @@
  */
 package com.github.fuchsdavid.annotator;
 
+import com.github.fuchsdavid.annotator.util.HTTPServerUtils;
 import com.sun.net.httpserver.HttpServer;
+import java.net.BindException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,12 +58,14 @@ public class TestMain {
     // public void hello() {}
     @Test
     public void shouldRunServerOnUnusedPort(){
-        assertNotNull(Main.runHTTPServer());
+        HttpServer server = HTTPServerUtils.runHTTPServer();
+        assertNotNull(server);
     }
     @Test
     public void shouldNotRunServerOnUsedPort(){
-        HttpServer server = Main.runHTTPServer();
+        Main.port = 3030;
+        HttpServer server = HTTPServerUtils.runHTTPServer();
         assertNotNull(server);
-        assertNull(Main.runHTTPServer());
+        assertNull(HTTPServerUtils.runHTTPServer());
     }
 }
