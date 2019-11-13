@@ -58,6 +58,7 @@ getData.onreadystatechange = function(){
         finally{
             data.createTHead().innerHTML="<tr><th>DBpedia predicate</th><th>DBpedia object</th></tr>";
             if(data.getElementsByTagName("tbody").length === 0) data.appendChild(document.createElement("tbody"));
+            mergeCells();
             window.scrollTo(0,0);
         }
     }
@@ -105,3 +106,24 @@ function submitData(){
     sendData.setRequestHeader("Content-Type", "application/json");
     sendData.send(JSON.stringify(data));
 }
+
+function mergeCells(){
+    let data = document.getElementById("data");
+    let dataBody = data.getElementsByTagName("tbody")[0];
+    let dataRows = dataBody.getElementsByTagName("tr");
+    let lastRow = null;
+    let numberOfRows = 1;
+    for(i=0; i < dataRows.length; i++){
+        if(lastRow !== null && dataRows[i].getElementsByTagName("td")[0].textContent === lastRow.getElementsByTagName("td")[0].textContent){
+            dataRows[i].removeChild(dataRows[i].getElementsByTagName("td")[0]);
+            lastRow.getElementsByTagName("td")[0].setAttribute("rowspan",++numberOfRows);
+        }
+        else{
+            lastRow = dataRows[i];
+            numberOfRows = 1;
+        }
+    }
+}
+window.onload = function(){
+    mergeCells();
+};
