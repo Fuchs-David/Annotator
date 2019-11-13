@@ -30,7 +30,9 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +54,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.w3c.dom.DOMException;
@@ -205,7 +208,7 @@ public class HTTPServerUtils {
         c.appendChild(document.createTextNode("You are currently annotating resource:"));
         caption.appendChild(c);
         caption.appendChild(document.createTextNode(" " + RDFUtils.getPrefixedName(m.listSubjects().next())));
-        m.listStatements().forEachRemaining(statement -> {
+        sortStatementsByPredicates(m).forEach(statement -> {
             Node tr = tbody.appendChild(document.createElement("tr"));
             Node p = tr.appendChild(document.createElement("td"));
             p.setTextContent(RDFUtils.getPrefixedName(statement.getPredicate()));
@@ -215,6 +218,20 @@ public class HTTPServerUtils {
             else
                 o.setTextContent(statement.getObject().asLiteral().getLexicalForm());
         });
+    }
+    
+    /**
+     * Return statements sorted by predicate lexicographically.
+     * 
+     * @param model containing statements
+     * @return 
+     */
+    private static List<Statement> sortStatementsByPredicates(Model m){
+        List<Statement> statements = m.listStatements().toList();
+        statements.sort((Statement o1, Statement o2) -> {
+            return o1.getPredicate().asResource().getURI().compareTo(o2.getPredicate().asResource().getURI());
+        });
+        return statements;
     }
     
     /**
@@ -277,7 +294,7 @@ public class HTTPServerUtils {
         try{
             JsonObjectBuilder object = JF.createObjectBuilder();
             JsonArrayBuilder array = JF.createArrayBuilder();
-            m.listStatements().forEachRemaining(statement -> {
+            sortStatementsByPredicates(m).forEach(statement -> {
                 JsonObjectBuilder createTriple = JF.createObjectBuilder()
                     .add("subject", RDFUtils.getPrefixedName(statement.getSubject()));
                 createTriple.add("predicate", RDFUtils.getPrefixedName(statement.getPredicate()));
