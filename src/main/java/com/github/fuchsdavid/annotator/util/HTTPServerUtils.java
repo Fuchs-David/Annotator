@@ -273,7 +273,7 @@ public class HTTPServerUtils {
         switch(params.get("direction")){
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
-                    m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT));
+                    m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
@@ -360,7 +360,7 @@ public class HTTPServerUtils {
             }
             sb.append("}");
             ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
-            pss.setIri("mbox", ID2USER.get(session_id).email);
+            pss.setIri("mbox","mailto:" + ID2USER.get(session_id).email);
             for(int i=0 ;i<numberOfAnnotatedModels; i++){
                 JsonValue annotation = annotations.get(i);
                 if(annotation.getValueType().equals(ValueType.NULL)) continue;
@@ -502,7 +502,7 @@ public class HTTPServerUtils {
         }
         ID2USER.put(session_id, EMAIL2USER.get(email));
         if(!ID2MODEL_LIST.containsKey(session_id)){
-            Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT));
+            Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
             Collection<Model> rdfCollection = new ArrayList<>();
             rdfCollection.add(m);
             ID2MODEL_LIST.put(session_id,rdfCollection);

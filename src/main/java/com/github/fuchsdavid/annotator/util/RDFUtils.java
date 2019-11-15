@@ -22,6 +22,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,18 +48,24 @@ public class RDFUtils {
      * 
      * @param exchange
      * @param file
+     * @param session_id
      * @return 
      * @throws java.io.IOException 
      */
-    public static Model retrieveTriples(HttpExchange exchange,InputStream file) throws IOException{
+    public static Model retrieveTriples(HttpExchange exchange,InputStream file,String session_id) throws IOException{
         Model m = null;
         try {
-            ParameterizedSparqlString pss = new ParameterizedSparqlString(IOUtils.toString(file, StandardCharsets.UTF_8.name()));
-            pss.setLiteral("offset", Main.offset++);
-            pss.setLiteral("limit", 1);
-            Query query = pss.asQuery();
-            m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
-            m.setNsPrefixes(PM);
+            String constructQuery = IOUtils.toString(file, StandardCharsets.UTF_8.name());
+            String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
+            do{
+                ParameterizedSparqlString pss = new ParameterizedSparqlString(constructQuery);
+                pss.setLiteral("offset", Main.offset++);
+                pss.setLiteral("limit", 1);
+                pss.setIri("current_annotator", new URL(currentAnnotator));
+                Query query = pss.asQuery();
+                m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
+                m.setNsPrefixes(PM);
+            }while(m.isEmpty() && ++Main.offset > 0);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             exchange.sendResponseHeaders(500, 0);

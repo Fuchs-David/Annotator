@@ -1,9 +1,15 @@
+BASE <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 CONSTRUCT {
   ?dbr ?dbp ?dbo.
 }
 WHERE {
   ?dbr owl:sameAs ?wdr.
+  FILTER NOT EXISTS {
+    ?dbr <annotatedBy> ?current_annotator.
+  }
+  FILTER (!bound(?frbr) || strstarts(str(?dbr),"http://vocab.org/frbr/core.html#")).
   FILTER (!isBlank(?dbr)).
   {
     SELECT ?dbr ?wdr
