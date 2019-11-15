@@ -349,18 +349,23 @@ public class HTTPServerUtils {
         JsonStructure topLevelObject = input.read();
         try{
             JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
+            int numberOfAnnotatedModels = Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", ""));
             StringBuilder sb = new StringBuilder();
-            sb.append("PREFIX an: <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>\n");
+            sb.append("BASE <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>\n");
             sb.append("INSERT DATA {\n");
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++)
+            for(int i=0 ;i<numberOfAnnotatedModels; i++){
+                if(annotations.get(i).getValueType().equals(ValueType.NULL)) continue;
                 sb.append("?subject").append(i).append(" a ?concept").append(i).append(" .\n")
-                  .append("?subject").append(i).append(" an:annotatedBy").append(" ?mbox").append(" .\n");
+                  .append("?subject").append(i).append(" <annotatedBy>").append(" ?mbox").append(" .\n");
+            }
             sb.append("}");
             ParameterizedSparqlString pss = new ParameterizedSparqlString(sb.toString());
             pss.setIri("mbox", ID2USER.get(session_id).email);
-            for(int i=0 ;i<Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", "")); i++){
+            for(int i=0 ;i<numberOfAnnotatedModels; i++){
                 JsonValue annotation = annotations.get(i);
-                pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[i])).listSubjects().next().getURI());
+                if(annotation.getValueType().equals(ValueType.NULL)) continue;
+                int p = Integer.parseInt(annotation.asJsonObject().getValue("/order").toString().replace("\"", ""));
+                pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[p])).listSubjects().next().getURI());
                 switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
                     case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
                     case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;

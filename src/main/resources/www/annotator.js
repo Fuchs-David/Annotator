@@ -82,6 +82,7 @@ function requestData(direction){
 
 function saveData(){
     let radioButtons = document.getElementById("radio_buttons").getElementsByTagName("input");
+    let before = numberOfAnnotations;
     for(let i=0; i<radioButtons.length;i++){
         radioButton = radioButtons[i];
         if(radioButton.checked === true){
@@ -91,6 +92,9 @@ function saveData(){
             window.sessionStorage.setItem(data.order,JSON.stringify(data));
             radioButton.checked = false;
         }
+    }
+    if(before === numberOfAnnotations){
+        numberOfAnnotations++;
     }
 }
 
