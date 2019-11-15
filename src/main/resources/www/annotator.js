@@ -87,14 +87,14 @@ function saveData(){
         radioButton = radioButtons[i];
         if(radioButton.checked === true){
             let data = new Object();
-            data.order = numberOfAnnotations++;
+            data.order = (dir==="forward" ? numberOfAnnotations++ : numberOfAnnotations--);
             data.type = radioButton.getAttribute("id");
             window.sessionStorage.setItem(data.order,JSON.stringify(data));
             radioButton.checked = false;
         }
     }
     if(before === numberOfAnnotations){
-        numberOfAnnotations++;
+        (dir==="forward" ? numberOfAnnotations++ : numberOfAnnotations--);
     }
 }
 
