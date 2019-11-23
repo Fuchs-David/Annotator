@@ -28,9 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +68,7 @@ import org.w3c.dom.Node;
  * @author David Fuchs
  */
 public class HTTPServerUtils {
+    private static final Logger LOGGER = Logger.getLogger(HTTPServerUtils.class.getName());
     
     private HTTPServerUtils(){}
     
@@ -87,11 +88,11 @@ public class HTTPServerUtils {
             server.start();
         }
         catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             server = null;
         }
         catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             server = null;
         }
         finally{
@@ -171,11 +172,11 @@ public class HTTPServerUtils {
                 exchange.getResponseBody().close();
             }
             catch(TransformerConfigurationException ex){
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
             }
             catch(TransformerException | DOMException ex){
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
             }
         }
@@ -256,7 +257,7 @@ public class HTTPServerUtils {
             }
         }
         catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
         }
     }
     
@@ -308,7 +309,7 @@ public class HTTPServerUtils {
             json = object.build().toString();
         }
         catch(JsonException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);
             exchange.getResponseBody().close();
             return;
@@ -384,15 +385,15 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
         }
         catch(JsonException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(InterruptedException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
         }
         catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
@@ -433,17 +434,17 @@ public class HTTPServerUtils {
             }
         }
         catch(TransformerConfigurationException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(TransformerException | JsonException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(Exception ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
@@ -601,7 +602,7 @@ public class HTTPServerUtils {
             InternetAddress address = new InternetAddress(email);
             address.validate();
         } catch (AddressException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             return false;
         }
         return true;
