@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +57,8 @@ import org.xml.sax.SAXException;
  * @author David Fuchs
  */
 public class Main {
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    
     public static final String INDEX = "/www/index.xhtml";
     public static final String AUTH = "/www/auth.xhtml";
     public static final String PASSWD = "./security/auth.json";
@@ -100,6 +103,7 @@ public class Main {
                 User u = new User(email, salt, passwordHash,true);
                 EMAIL2USER.put(email, u);
             }
+            LOGGER.log(Level.INFO, "{0}: Loaded user credentials from storage.", new Timestamp(System.currentTimeMillis()));
             DOCUMENT_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             SPARQLendpoint = (new URL("http://localhost:3030/fuseki")).toExternalForm();
             CACHED_FILES.put(INDEX,DOCUMENT_BUILDER.parse(Main.class.getResourceAsStream(INDEX)));
@@ -126,14 +130,14 @@ public class Main {
             }
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
         catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         } catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
     }
@@ -146,5 +150,6 @@ public class Main {
     public static void main(String[] args){
         Argument.parseArguments(args);
         if((server = HTTPServerUtils.runHTTPServer()) == null) System.exit(1);
+        LOGGER.log(Level.INFO, "{0}: Started HTTP server on port " + port + ".", new Timestamp(System.currentTimeMillis()));
     }
 }
