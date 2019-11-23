@@ -134,7 +134,8 @@ public class HTTPServerUtils {
         }
         if((exchange.getRequestURI().getPath().endsWith("/") || !exchange.getRequestURI().getPath().contains("."))
                 && !EMAIL2STATE.get(ID2USER.get(session_id).email)){
-            exchange.sendResponseHeaders(401, 0);
+            exchange.getResponseHeaders().add("Location", "/auth");
+            exchange.sendResponseHeaders(307, 0);
             exchange.getResponseBody().close();
             return;
         }
@@ -144,6 +145,7 @@ public class HTTPServerUtils {
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         else
             path += "www" + exchange.getRequestURI().getPath();
+        LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path, new Timestamp(System.currentTimeMillis()));
         if(exchange.getRequestURI().getPath().equals("/")){
             try{
                 Document document = DOCUMENT_BUILDER.newDocument();

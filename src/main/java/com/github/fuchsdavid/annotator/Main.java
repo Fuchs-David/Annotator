@@ -130,14 +130,14 @@ public class Main {
             }
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
-            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
         catch (IOException ex) {
-            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         } catch (Exception ex) {
-            LOGGER.log(Level.INFO, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
     }
