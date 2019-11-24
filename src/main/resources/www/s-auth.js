@@ -20,6 +20,7 @@ sendData.onreadystatechange = function(){
     if(sendData.readyState === XMLHttpRequest.DONE &&
             (sendData.status === 200 || sendData.status === 201)){
         alert("Authentication succeeded.");
+        location.href = "/";
     }
 };
 function submitCredentials(){

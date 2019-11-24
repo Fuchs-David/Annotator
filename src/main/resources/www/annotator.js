@@ -65,10 +65,10 @@ getData.onreadystatechange = function(){
 };
 
 sendData.onreadystatechange = function(){
-    if(getData.readyState === XMLHttpRequest.DONE && getData.status === 201){
+    if(sendData.readyState === XMLHttpRequest.DONE && sendData.status === 201){
         alert("Data have been successfully uploaded to the server.");
         window.sessionStorage.clear();
-        location.reload(true);
+        location.href = "/auth";
     }
 };
 
