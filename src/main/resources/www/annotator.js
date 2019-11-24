@@ -68,7 +68,7 @@ sendData.onreadystatechange = function(){
     if(sendData.readyState === XMLHttpRequest.DONE && sendData.status === 201){
         alert("Data have been successfully uploaded to the server.");
         window.sessionStorage.clear();
-        location.href = "/auth";
+        location.reload(true);
     }
 };
 
