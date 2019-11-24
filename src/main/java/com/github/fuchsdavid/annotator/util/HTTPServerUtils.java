@@ -461,6 +461,7 @@ public class HTTPServerUtils {
      * @throws IOException 
      */
     private static boolean createAccount(JsonStructure root, HttpExchange exchange) throws IOException{
+        LOGGER.log(Level.INFO, "{0}: Creating a new account.", new Timestamp(System.currentTimeMillis()));
         String email = root.getValue("/email").toString().replace("\"", "");
         String password = root.getValue("/password").toString().replace("\"", "");
         String repeatedPassword = root.getValue("/repeatedPassword").toString().replace("\"", "");
@@ -503,6 +504,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return false;
         }
+        LOGGER.log(Level.INFO, "{0}: Logging user " + email + " into the application.", new Timestamp(System.currentTimeMillis()));
         ID2USER.put(session_id, EMAIL2USER.get(email));
         if(!ID2MODEL_LIST.containsKey(session_id)){
             Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);

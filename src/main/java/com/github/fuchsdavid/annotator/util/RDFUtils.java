@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
@@ -40,6 +41,7 @@ import org.apache.jena.shared.PrefixMapping;
  * @author David Fuchs
  */
 public class RDFUtils {
+    private static final Logger LOGGER = Logger.getLogger(RDFUtils.class.getName());
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
     
     private RDFUtils(){}
@@ -67,11 +69,11 @@ public class RDFUtils {
                 m.setNsPrefixes(PM);
             }while(m.isEmpty() && ++Main.offset > 0);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);
             exchange.getResponseBody().close();
         } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);
             exchange.getResponseBody().close();
         }

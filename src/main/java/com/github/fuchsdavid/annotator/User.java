@@ -36,7 +36,6 @@ public class User {
     /**
      * Creates instance of a new user.
      * 
-     * @param PWH
      * @param email
      * @param salt
      * @param passwordHash 

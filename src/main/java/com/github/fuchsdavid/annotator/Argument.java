@@ -18,6 +18,7 @@ package com.github.fuchsdavid.annotator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +28,7 @@ import java.util.logging.Logger;
  * @author David Fuchs
  */
 public class Argument {
+    private static final Logger LOGGER = Logger.getLogger(Argument.class.getName());
     private static final String SPARQL_ENDPOINT = "-SPARQLendpoint";
     private static final String PORT = "-port";
     
@@ -50,7 +52,7 @@ public class Argument {
                 }
             }
         } catch (MalformedURLException | IllegalArgumentException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
     }
