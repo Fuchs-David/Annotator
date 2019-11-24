@@ -133,7 +133,7 @@ public class HTTPServerUtils {
             return;
         }
         if(!exchange.getRequestURI().getPath().contains(".") && !ID2USER.containsKey(session_id)){
-            LOGGER.log(Level.SEVERE, "{0}: Unauthorized access, redirecting to /auth", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: Unauthorized access, redirecting to /auth", new Timestamp(System.currentTimeMillis()));
             exchange.getResponseHeaders().add("Location", "/auth");
             exchange.sendResponseHeaders(307, 0);
             exchange.getResponseBody().close();
@@ -385,7 +385,7 @@ public class HTTPServerUtils {
             ID2POSITION.keySet().remove(session_id);
             exchange.sendResponseHeaders(201, 0);
             exchange.getResponseBody().close();
-            LOGGER.log(Level.SEVERE, "{0}: Successfully entered data into the triplestore.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.", new Timestamp(System.currentTimeMillis()));
         }
         catch(JsonException ex){
             LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
@@ -431,7 +431,7 @@ public class HTTPServerUtils {
                             boolean loginResult = login(session_id, root, exchange, flag);
                             if(loginResult){
                                 EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
-                                LOGGER.log(Level.SEVERE, "{0}: Successfully logged in user "
+                                LOGGER.log(Level.INFO, "{0}: Successfully logged in user "
                                         + ID2USER.get(session_id).email, new Timestamp(System.currentTimeMillis()));
                             }
                             break;
@@ -484,7 +484,7 @@ public class HTTPServerUtils {
         EMAIL2USER.put(email, user);
         exchange.sendResponseHeaders(201, 0);
         exchange.getResponseBody().close();
-        LOGGER.log(Level.SEVERE, "{0}: Successfully created account with e-mail address " + email, new Timestamp(System.currentTimeMillis()));
+        LOGGER.log(Level.INFO, "{0}: Successfully created account with e-mail address " + email, new Timestamp(System.currentTimeMillis()));
         return true;
     }
     
