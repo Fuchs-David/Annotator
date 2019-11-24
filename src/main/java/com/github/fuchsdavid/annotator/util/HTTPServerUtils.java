@@ -386,6 +386,10 @@ public class HTTPServerUtils {
             exchange.sendResponseHeaders(201, 0);
             exchange.getResponseBody().close();
             LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.", new Timestamp(System.currentTimeMillis()));
+            ArrayList<Model> rdfCollection = new ArrayList<>();
+            rdfCollection.add(RDFUtils.retrieveTriples(exchange, Main.class.getResourceAsStream(CONSTRUCT), session_id));
+            ID2MODEL_LIST.put(session_id, rdfCollection);
+            ID2POSITION.put(session_id, new Position(0));
         }
         catch(JsonException ex){
             LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
