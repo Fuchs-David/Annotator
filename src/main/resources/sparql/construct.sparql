@@ -13,6 +13,10 @@ WHERE {
   FILTER (!isBlank(?dbr)).
   {
     SELECT ?dbr ?wdr
+    ?wdr wdt:P31 ?wdc.
+    VALUES ?wdc {
+      wd:Q207628 wd:Q2031291 wd:Q47461344 wd:Q3331189 wd:Q53731850 wd:Q87167 wd:Q213924 wd:Q1440453 wd:Q834459 wd:Q2217259 wd:Q274076 wd:Q1754581 wd:Q690851 wd:Q284465
+    }.
     WHERE {
       ?dbr owl:sameAs ?wdr.
       FILTER(strstarts(str(?wdr),"http://www.wikidata.org/")&&strstarts(str(?dbr),"http://dbpedia.org/")).
