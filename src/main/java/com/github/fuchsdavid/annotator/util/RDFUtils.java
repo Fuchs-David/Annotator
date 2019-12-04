@@ -65,6 +65,8 @@ public class RDFUtils {
                 pss.setLiteral("limit", 1);
                 pss.setIri("current_annotator", new URL(currentAnnotator));
                 Query query = pss.asQuery();
+                LOGGER.log(Level.INFO, "{0}: Querying SPARQL endpoint for user: " + Main.ID2USER.get(session_id).email,
+                           new Timestamp(System.currentTimeMillis()));
                 m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
                 m.setNsPrefixes(PM);
             }while(m.isEmpty() && ++Main.offset > 0);
