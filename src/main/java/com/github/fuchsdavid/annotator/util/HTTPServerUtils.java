@@ -276,19 +276,23 @@ public class HTTPServerUtils {
         switch(params.get("direction")){
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
+                    LOGGER.log(Level.INFO, "{0}: Requesting more data from SPARQL endpoint.", new Timestamp(System.currentTimeMillis()));
                     m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
                 else{
+                    LOGGER.log(Level.INFO, "{0}: Retrieving cached data.", new Timestamp(System.currentTimeMillis()));
                     m = (Model)(rdfCollection.toArray()[ID2POSITION.get(session_id).preincrement()]);
                 }
                 break;
             case "backward":
+                LOGGER.log(Level.INFO, "{0}: Retrieving cached data.", new Timestamp(System.currentTimeMillis()));
                 m = (Model)(rdfCollection.toArray()[ID2POSITION.get(session_id).predecrement()]);
                 break;
         }
         if(m == null){
+            LOGGER.log(Level.WARNING, "{0}: No data found.", new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
             return;
@@ -319,6 +323,7 @@ public class HTTPServerUtils {
         exchange.sendResponseHeaders(200, json.length());
         exchange.getResponseBody().write(json.getBytes());
         exchange.getResponseBody().close();
+        LOGGER.log(Level.INFO, "{0}: Responded to request for data.", new Timestamp(System.currentTimeMillis()));
     }
     
     /**
