@@ -320,7 +320,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return;
         }
-        exchange.sendResponseHeaders(200, json.length());
+        exchange.sendResponseHeaders(200, json.getBytes().length);
         exchange.getResponseBody().write(json.getBytes());
         exchange.getResponseBody().close();
         LOGGER.log(Level.INFO, "{0}: Responded to request for data.", new Timestamp(System.currentTimeMillis()));
