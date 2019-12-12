@@ -11,7 +11,10 @@ WHERE {
   FILTER NOT EXISTS {
     ?dbr <annotatedBy> ?current_annotator.
   }
-  FILTER (!bound(?frbr) || strstarts(str(?dbr),"http://vocab.org/frbr/core.html#")).
+  OPTIONAL {
+    ?dbr a ?frbr.
+  }
+  FILTER (!bound(?frbr) || !strstarts(str(?frbr),"http://vocab.org/frbr/core.html#")).
   FILTER (!isBlank(?dbr)).
   {
     SELECT ?dbr ?wdr
