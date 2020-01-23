@@ -1,6 +1,5 @@
 BASE <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wd: <http://www.wikidata.org/entity/>
 CONSTRUCT {
