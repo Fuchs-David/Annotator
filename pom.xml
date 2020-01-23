@@ -30,7 +30,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.0</version>
           <configuration>
             <archive>
               <manifest>
@@ -41,6 +41,9 @@
             <descriptorRefs>
                 <descriptorRef>jar-with-dependencies</descriptorRef>
             </descriptorRefs>
+            <descriptors>
+                <descriptor>assembly.xml</descriptor>
+            </descriptors>
           </configuration>
           <executions>
               <execution>
