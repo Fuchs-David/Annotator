@@ -147,6 +147,13 @@ public class HTTPServerUtils {
             path += "www" + exchange.getRequestURI().getPath();
         LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path, new Timestamp(System.currentTimeMillis()));
         if(exchange.getRequestURI().getPath().equals("/")){
+            if(!ID2MODEL_LIST.containsKey(session_id)){
+                Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
+                Collection<Model> rdfCollection = new ArrayList<>();
+                rdfCollection.add(m);
+                ID2MODEL_LIST.put(session_id,rdfCollection);
+                ID2POSITION.put(session_id, new Position(0));
+            }
             try{
                 Document document = DOCUMENT_BUILDER.newDocument();
                 Node root = CACHED_FILES.get(path).getDocumentElement().cloneNode(true);
@@ -419,7 +426,6 @@ public class HTTPServerUtils {
      */
     private static void handleAuthentication(HttpExchange exchange) throws IOException {
         String session_id = retrieveSessionID(exchange);
-        boolean flag = true;
         if(session_id.equals("")) session_id = createSession(exchange);
         // Dispatch allowed request methods.
         try{
@@ -435,15 +441,18 @@ public class HTTPServerUtils {
                             break;
                 case "POST":JsonReader input = Json.createReader(exchange.getRequestBody());
                             JsonStructure root = input.read();
+                            boolean accountCreatedSuccessfully = true;
                             if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
-                                if((flag = !createAccount(root, exchange))) return;
-                            boolean loginResult = login(session_id, root, exchange, flag);
-                            if(loginResult){
-                                EMAIL2STATE.put(ID2USER.get(session_id).email, loginResult);
+                                if(!(accountCreatedSuccessfully = createAccount(root, exchange))) return;
+                            boolean loggedInSuccessfully = login(session_id, root, exchange, !accountCreatedSuccessfully);
+                            if(loggedInSuccessfully){
+                                EMAIL2STATE.put(ID2USER.get(session_id).email, loggedInSuccessfully);
                                 LOGGER.log(Level.INFO, "{0}: Successfully logged in user "
                                         + ID2USER.get(session_id).email, new Timestamp(System.currentTimeMillis()));
                             }
                             break;
+
+
                 default:    exchange.sendResponseHeaders(405, 0);
                             exchange.getResponseBody().close();
             }
@@ -528,15 +537,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return false;
         }
-        LOGGER.log(Level.INFO, "{0}: Logging user " + email + " into the application.", new Timestamp(System.currentTimeMillis()));
         ID2USER.put(session_id, EMAIL2USER.get(email));
-        if(!ID2MODEL_LIST.containsKey(session_id)){
-            Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
-            Collection<Model> rdfCollection = new ArrayList<>();
-            rdfCollection.add(m);
-            ID2MODEL_LIST.put(session_id,rdfCollection);
-            ID2POSITION.put(session_id, new Position(0));
-        }
         if(sendHeaders){
             LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.", new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(200, 0);
