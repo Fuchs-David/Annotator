@@ -41,6 +41,7 @@ import org.apache.jena.shared.PrefixMapping;
  * @author David Fuchs
  */
 public class RDFUtils {
+    private static final int NUMBER_OF_LINKS_DBPEDIA2WD = 2669;
     private static final Logger LOGGER = Logger.getLogger(RDFUtils.class.getName());
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
     
@@ -61,7 +62,13 @@ public class RDFUtils {
             String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
             do{
                 ParameterizedSparqlString pss = new ParameterizedSparqlString(constructQuery);
-                pss.setLiteral("offset", Main.offset++);
+                int offset;
+                do{
+                    offset = Main.RNG.nextInt(NUMBER_OF_LINKS_DBPEDIA2WD);
+                }
+                while(Main.OFFSETS.contains(offset));
+                Main.OFFSETS.add(offset);
+                pss.setLiteral("offset", offset);
                 pss.setLiteral("limit", 1);
                 pss.setIri("current_annotator", new URL(currentAnnotator));
                 Query query = pss.asQuery();
@@ -69,7 +76,7 @@ public class RDFUtils {
                            new Timestamp(System.currentTimeMillis()));
                 m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
                 m.setNsPrefixes(PM);
-            }while(m.isEmpty() && ++Main.offset > 0);
+            }while(m.isEmpty());
         } catch (FileNotFoundException ex) {
             LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);

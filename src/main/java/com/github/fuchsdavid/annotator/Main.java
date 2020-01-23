@@ -29,9 +29,11 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.json.Json;
@@ -72,6 +74,7 @@ public class Main {
     public static final Map<String,User> ID2USER = new HashMap<>();
     public static final Map<String,User> EMAIL2USER = new HashMap<>();
     public static final Map<String,Document> CACHED_FILES = new HashMap<>();
+    public static final Set<Integer> OFFSETS = new HashSet<>();
     
     public static final TransformerFactory TF = TransformerFactory.newInstance();
     public static final JsonBuilderFactory JF = Json.createBuilderFactory(null);
@@ -82,7 +85,6 @@ public class Main {
     
     public static DocumentBuilder DOCUMENT_BUILDER;
     public static MessageDigest MD;
-    public static int offset = 0;
     
     private static HttpServer server;
     
