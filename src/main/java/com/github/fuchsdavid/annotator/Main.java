@@ -120,6 +120,7 @@ public class Main {
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                LOGGER.log(Level.INFO, "{0}: Shutdown HTTP server on port " + port + ".", new Timestamp(System.currentTimeMillis()));
             }));
             Scanner scanner = new Scanner(Main.class.getResourceAsStream(PREFIXES));
             while(scanner.hasNextLine()){
