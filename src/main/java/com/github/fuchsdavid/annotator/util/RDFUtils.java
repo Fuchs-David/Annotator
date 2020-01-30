@@ -99,6 +99,8 @@ public class RDFUtils {
                 else{
                     pss = new ParameterizedSparqlString(queryForNewAnnotation);
                     ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
+                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not annotated at all yet.",
+                               new Timestamp(System.currentTimeMillis()));
                     ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
                     int numberOfResourcesForAnnotation;
                     if(rs.hasNext())
