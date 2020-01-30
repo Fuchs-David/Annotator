@@ -86,9 +86,12 @@ public class RDFUtils {
                     pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
                     ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
                     pss.setIri("current_annotator", new URL(currentAnnotator));
+                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not annotated by: "
+                                           + Main.ID2USER.get(session_id).email,
+                               new Timestamp(System.currentTimeMillis()));
                     ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
                     if(rs.hasNext())
-                        offset = rs.next().getLiteral("count").getInt();
+                        offset = Main.RNG.nextInt(rs.next().getLiteral("count").getInt());
                     else continue;
                 }
                 else{
