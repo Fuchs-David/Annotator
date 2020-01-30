@@ -29,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
@@ -46,6 +47,7 @@ public class RDFUtils {
     
     private static String queryForNewAnnotation;
     private static String queryForCrossAnnotatorAgreement;
+    private static String queryForNumberOfAnnotations;
     
     static{
         try {
@@ -55,6 +57,9 @@ public class RDFUtils {
             queryForCrossAnnotatorAgreement = IOUtils.toString(
                                         Main.class.getResourceAsStream("/sparql/crossAnnotatorAgreementQuery.sparql"),
                                         StandardCharsets.UTF_8.name());
+            queryForNumberOfAnnotations = IOUtils.toString(
+                                    Main.class.getResourceAsStream("/sparql/numberOfAnnotatedResourcesByOtherUsers.sparql"),
+                                    StandardCharsets.UTF_8.name());
         }
         catch (IOException ex) {
             Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
@@ -75,24 +80,33 @@ public class RDFUtils {
         try {
             String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
             do{
-                ParameterizedSparqlString pss = 
-                        (Main.RNG.nextInt(100)<10 ? new ParameterizedSparqlString(queryForCrossAnnotatorAgreement)
-                                                  : new ParameterizedSparqlString(queryForNewAnnotation));
+                ParameterizedSparqlString pss;
                 int offset;
-                do{
-                    offset = Main.RNG.nextInt(NUMBER_OF_LINKS_DBPEDIA2WD);
+                if(Main.RNG.nextInt(100)<10){
+                    pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
+                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
+                    pss.setIri("current_annotator", new URL(currentAnnotator));
+                    ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
+                    if(rs.hasNext())
+                        offset = rs.next().getLiteral("count").getInt();
+                    else continue;
                 }
-                while(Main.OFFSETS.contains(offset));
-                Main.OFFSETS.add(offset);
+                else{
+                    pss = new ParameterizedSparqlString(queryForNewAnnotation);
+                    do{
+                        offset = Main.RNG.nextInt(NUMBER_OF_LINKS_DBPEDIA2WD);
+                    }
+                    while(Main.OFFSETS.contains(offset));
+                    Main.OFFSETS.add(offset);
+                }
                 pss.setLiteral("offset", offset);
                 pss.setLiteral("limit", 1);
                 pss.setIri("current_annotator", new URL(currentAnnotator));
-                Query query = pss.asQuery();
                 LOGGER.log(Level.INFO, "{0}: Querying SPARQL endpoint for user: " + Main.ID2USER.get(session_id).email,
                            new Timestamp(System.currentTimeMillis()));
-                m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
+                m = QueryExecutionFactory.sparqlService(SPARQLendpoint,pss.asQuery()).execConstruct();
                 m.setNsPrefixes(PM);
-            }while(m.isEmpty());
+            }while(m==null || m.isEmpty());
         }
         catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));

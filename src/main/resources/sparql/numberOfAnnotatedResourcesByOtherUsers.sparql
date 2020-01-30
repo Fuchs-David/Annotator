@@ -1,0 +1,18 @@
+BASE <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wd: <http://www.wikidata.org/entity/>
+SELECT (count(*) as ?count)
+WHERE {
+  ?dbr owl:sameAs ?wdr.
+  ?wdr wdt:P31 ?wdc.
+  FILTER (!isBlank(?dbr)).
+  FILTER(strstarts(str(?wdr),"http://www.wikidata.org/")&&strstarts(str(?dbr),"http://dbpedia.org/")).
+  ?dbr <annotatedBy> ?annotator.
+  ?dbr a ?frbr_category.
+  FILTER(!contains(str(?annotator),str(?current_annotator))).
+  FILTER(strstarts(str(?frbr_category),"http://vocab.org/frbr/core.html#")).
+  VALUES ?wdc {
+    wd:Q207628 wd:Q2031291 wd:Q47461344 wd:Q3331189 wd:Q53731850 wd:Q87167 wd:Q213924 wd:Q1440453 wd:Q834459 wd:Q2217259 wd:Q274076 wd:Q1754581 wd:Q690851 wd:Q284465
+  }.
+}
