@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.ParameterizedSparqlString;
-import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
@@ -40,7 +39,6 @@ import org.apache.jena.shared.PrefixMapping;
  * @author David Fuchs
  */
 public class RDFUtils {
-    private static final int NUMBER_OF_LINKS_DBPEDIA2WD = 2669;
     private static final Logger LOGGER = Logger.getLogger(RDFUtils.class.getName());
     
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
@@ -48,6 +46,7 @@ public class RDFUtils {
     private static String queryForNewAnnotation;
     private static String queryForCrossAnnotatorAgreement;
     private static String queryForNumberOfAnnotations;
+    private static String queryForNumberOfNotAnnotatedResorces;
     
     static{
         try {
@@ -59,6 +58,9 @@ public class RDFUtils {
                                         StandardCharsets.UTF_8.name());
             queryForNumberOfAnnotations = IOUtils.toString(
                                     Main.class.getResourceAsStream("/sparql/numberOfAnnotatedResourcesByOtherUsers.sparql"),
+                                    StandardCharsets.UTF_8.name());
+            queryForNumberOfNotAnnotatedResorces = IOUtils.toString(
+                                    Main.class.getResourceAsStream("/sparql/numberOfResourcesNotYetAnnotated.sparql"),
                                     StandardCharsets.UTF_8.name());
         }
         catch (IOException ex) {
@@ -96,8 +98,14 @@ public class RDFUtils {
                 }
                 else{
                     pss = new ParameterizedSparqlString(queryForNewAnnotation);
+                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
+                    ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
+                    int numberOfResourcesForAnnotation;
+                    if(rs.hasNext())
+                        numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
+                    else continue;
                     do{
-                        offset = Main.RNG.nextInt(NUMBER_OF_LINKS_DBPEDIA2WD);
+                        offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
                     }
                     while(Main.OFFSETS.contains(offset));
                     Main.OFFSETS.add(offset);
