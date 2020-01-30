@@ -19,9 +19,7 @@ package com.github.fuchsdavid.annotator.util;
 import com.github.fuchsdavid.annotator.Main;
 import static com.github.fuchsdavid.annotator.Main.SPARQLendpoint;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -43,25 +41,43 @@ import org.apache.jena.shared.PrefixMapping;
 public class RDFUtils {
     private static final int NUMBER_OF_LINKS_DBPEDIA2WD = 2669;
     private static final Logger LOGGER = Logger.getLogger(RDFUtils.class.getName());
+    
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
+    
+    private static String queryForNewAnnotation;
+    private static String queryForCrossAnnotatorAgreement;
+    
+    static{
+        try {
+            queryForNewAnnotation = IOUtils.toString(
+                                        Main.class.getResourceAsStream("/sparql/resourcesToBeAnnotatedQuery.sparql"),
+                                        StandardCharsets.UTF_8.name());
+            queryForCrossAnnotatorAgreement = IOUtils.toString(
+                                        Main.class.getResourceAsStream("/sparql/crossAnnotatorAgreementQuery.sparql"),
+                                        StandardCharsets.UTF_8.name());
+        }
+        catch (IOException ex) {
+            Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
     
     private RDFUtils(){}
     /**
      * Retrieves triples from SPARQL endpoint using query loaded from resource file.
      * 
      * @param exchange
-     * @param file
      * @param session_id
      * @return 
      * @throws java.io.IOException 
      */
-    public static Model retrieveTriples(HttpExchange exchange,InputStream file,String session_id) throws IOException{
+    public static Model retrieveTriples(HttpExchange exchange,String session_id) throws IOException{
         Model m = null;
         try {
-            String constructQuery = IOUtils.toString(file, StandardCharsets.UTF_8.name());
             String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
             do{
-                ParameterizedSparqlString pss = new ParameterizedSparqlString(constructQuery);
+                ParameterizedSparqlString pss = 
+                        (Main.RNG.nextInt(100)<10 ? new ParameterizedSparqlString(queryForCrossAnnotatorAgreement)
+                                                  : new ParameterizedSparqlString(queryForNewAnnotation));
                 int offset;
                 do{
                     offset = Main.RNG.nextInt(NUMBER_OF_LINKS_DBPEDIA2WD);
@@ -77,11 +93,8 @@ public class RDFUtils {
                 m = QueryExecutionFactory.sparqlService(SPARQLendpoint,query).execConstruct();
                 m.setNsPrefixes(PM);
             }while(m.isEmpty());
-        } catch (FileNotFoundException ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
-            exchange.sendResponseHeaders(500, 0);
-            exchange.getResponseBody().close();
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);
             exchange.getResponseBody().close();

@@ -148,7 +148,7 @@ public class HTTPServerUtils {
         LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path, new Timestamp(System.currentTimeMillis()));
         if(exchange.getRequestURI().getPath().equals("/")){
             if(!ID2MODEL_LIST.containsKey(session_id)){
-                Model m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
+                Model m = RDFUtils.retrieveTriples(exchange,session_id);
                 Collection<Model> rdfCollection = new ArrayList<>();
                 rdfCollection.add(m);
                 ID2MODEL_LIST.put(session_id,rdfCollection);
@@ -284,7 +284,7 @@ public class HTTPServerUtils {
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
                     LOGGER.log(Level.INFO, "{0}: Requesting more data from SPARQL endpoint.", new Timestamp(System.currentTimeMillis()));
-                    m = RDFUtils.retrieveTriples(exchange,Main.class.getResourceAsStream(CONSTRUCT),session_id);
+                    m = RDFUtils.retrieveTriples(exchange,session_id);
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
@@ -399,7 +399,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.", new Timestamp(System.currentTimeMillis()));
             ArrayList<Model> rdfCollection = new ArrayList<>();
-            rdfCollection.add(RDFUtils.retrieveTriples(exchange, Main.class.getResourceAsStream(CONSTRUCT), session_id));
+            rdfCollection.add(RDFUtils.retrieveTriples(exchange, session_id));
             ID2MODEL_LIST.put(session_id, rdfCollection);
             ID2POSITION.put(session_id, new Position(0));
         }

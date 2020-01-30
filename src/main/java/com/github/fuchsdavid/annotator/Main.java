@@ -64,7 +64,6 @@ public class Main {
     public static final String INDEX = "/www/index.xhtml";
     public static final String AUTH = "/www/auth.xhtml";
     public static final String PASSWD = "./security/auth.json";
-    public static final String CONSTRUCT = "/sparql/construct.sparql";
     public static final String PREFIXES = "/config/known_prefixes.conf";
     public static final Random RNG = new Random();
     
