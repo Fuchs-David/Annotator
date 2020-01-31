@@ -92,13 +92,17 @@ public class RDFUtils {
                                            + Main.ID2USER.get(session_id).email,
                                new Timestamp(System.currentTimeMillis()));
                     ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
+                    int numberOfResourcesForCrossAnnotation;
                     if(rs.hasNext())
-                        offset = Main.RNG.nextInt(rs.next().getLiteral("count").getInt());
+                        numberOfResourcesForCrossAnnotation = Main.RNG.nextInt(rs.next().getLiteral("count").getInt());
                     else continue;
+                    do
+                        offset = Main.RNG.nextInt(numberOfResourcesForCrossAnnotation);
+                    while(Main.OFFSETS.contains(offset));
                 }
                 else{
                     pss = new ParameterizedSparqlString(queryForNewAnnotation);
-                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
+                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfNotAnnotatedResorces);
                     LOGGER.log(Level.INFO, "{0}: Finding the number of resources not annotated at all yet.",
                                new Timestamp(System.currentTimeMillis()));
                     ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
@@ -106,9 +110,8 @@ public class RDFUtils {
                     if(rs.hasNext())
                         numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
                     else continue;
-                    do{
+                    do
                         offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
-                    }
                     while(Main.OFFSETS.contains(offset));
                     Main.OFFSETS.add(offset);
                 }
