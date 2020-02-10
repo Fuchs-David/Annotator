@@ -84,7 +84,7 @@ public class RDFUtils {
             do{
                 ParameterizedSparqlString pss;
                 int offset;
-                if(Main.RNG.nextInt(100)<10){
+                if(Main.RNG.nextInt(100)<1){
                     pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
                     ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
                     pss.setIri("current_annotator", new URL(currentAnnotator));
@@ -96,9 +96,7 @@ public class RDFUtils {
                     if(rs.hasNext())
                         numberOfResourcesForCrossAnnotation = Main.RNG.nextInt(rs.next().getLiteral("count").getInt());
                     else continue;
-                    do
-                        offset = Main.RNG.nextInt(numberOfResourcesForCrossAnnotation);
-                    while(Main.OFFSETS.contains(offset));
+                    offset = Main.RNG.nextInt(numberOfResourcesForCrossAnnotation);
                 }
                 else{
                     pss = new ParameterizedSparqlString(queryForNewAnnotation);
@@ -110,10 +108,7 @@ public class RDFUtils {
                     if(rs.hasNext())
                         numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
                     else continue;
-                    do
-                        offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
-                    while(Main.OFFSETS.contains(offset));
-                    Main.OFFSETS.add(offset);
+                    offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
                 }
                 pss.setLiteral("offset", offset);
                 pss.setLiteral("limit", 1);

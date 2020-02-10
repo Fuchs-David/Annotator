@@ -73,7 +73,6 @@ public class Main {
     public static final Map<String,User> ID2USER = new HashMap<>();
     public static final Map<String,User> EMAIL2USER = new HashMap<>();
     public static final Map<String,Document> CACHED_FILES = new HashMap<>();
-    public static final Set<Integer> OFFSETS = new HashSet<>();
     
     public static final TransformerFactory TF = TransformerFactory.newInstance();
     public static final JsonBuilderFactory JF = Json.createBuilderFactory(null);
