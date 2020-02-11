@@ -88,11 +88,13 @@ public class HTTPServerUtils {
             server.start();
         }
         catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             server = null;
         }
         catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             server = null;
         }
         finally{
@@ -106,7 +108,8 @@ public class HTTPServerUtils {
      * @param exchange
      * @throws IOException 
      */
-    private static void handleRequest(HttpExchange exchange) throws IOException {
+    private static void handleRequest(HttpExchange exchange)
+            throws IOException {
         String session_id = retrieveSessionID(exchange);
         if(session_id.equals("")) session_id = createSession(exchange);
         // Dispatch allowed request methods.
@@ -125,7 +128,8 @@ public class HTTPServerUtils {
      * @param session_id
      * @throws IOException 
      */
-    private static void doGet(HttpExchange exchange, String session_id) throws IOException{
+    private static void doGet(HttpExchange exchange, String session_id)
+            throws IOException{
         String path = "/";
         if(exchange.getRequestURI().getPath().contains("..")){
             exchange.sendResponseHeaders(403, 0);
@@ -133,7 +137,8 @@ public class HTTPServerUtils {
             return;
         }
         if(!exchange.getRequestURI().getPath().contains(".") && !ID2USER.containsKey(session_id)){
-            LOGGER.log(Level.INFO, "{0}: Unauthorized access, redirecting to /auth", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: Unauthorized access, redirecting to /auth",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.getResponseHeaders().add("Location", "/auth");
             exchange.sendResponseHeaders(307, 0);
             exchange.getResponseBody().close();
@@ -145,7 +150,8 @@ public class HTTPServerUtils {
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         else
             path += "www" + exchange.getRequestURI().getPath();
-        LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path, new Timestamp(System.currentTimeMillis()));
+        LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path,
+                   new Timestamp(System.currentTimeMillis()));
         if(exchange.getRequestURI().getPath().equals("/")){
             if(!ID2MODEL_LIST.containsKey(session_id)){
                 Model m = RDFUtils.retrieveTriples(exchange,session_id);
@@ -181,19 +187,25 @@ public class HTTPServerUtils {
                 exchange.getResponseBody().close();
             }
             catch(TransformerConfigurationException ex){
-                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                           new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
             }
             catch(TransformerException | DOMException ex){
-                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+                LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                           new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
             }
         }
         else{
             String[] ext = path.split("\\.");
             switch(ext[ext.length-1]){
-                case "css": exchange.getResponseHeaders().add("content-type", "text/css");               break;
-                case "js":  exchange.getResponseHeaders().add("content-type", "text/javascript+module"); break;
+                case "css": exchange.getResponseHeaders().add("content-type",
+                                                              "text/css");
+                            break;
+                case "js":  exchange.getResponseHeaders().add("content-type",
+                                                              "text/javascript+module");
+                            break;
             }
             try (InputStream is = Main.class.getResourceAsStream(path)) {
                 exchange.sendResponseHeaders(200, is.available());
@@ -276,30 +288,35 @@ public class HTTPServerUtils {
      * @param exchange
      * @param session_id 
      */
-    private static void doGetData(HttpExchange exchange, String session_id) throws IOException{
+    private static void doGetData(HttpExchange exchange, String session_id)
+            throws IOException{
         Collection<Model> rdfCollection = ID2MODEL_LIST.get(session_id);
         Map<String,String> params = retrieveQueryParameters(exchange);
         Model m = null;
         switch(params.get("direction")){
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
-                    LOGGER.log(Level.INFO, "{0}: Requesting more data from SPARQL endpoint.", new Timestamp(System.currentTimeMillis()));
+                    LOGGER.log(Level.INFO, "{0}: Requesting more data from SPARQL endpoint.",
+                               new Timestamp(System.currentTimeMillis()));
                     m = RDFUtils.retrieveTriples(exchange,session_id);
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
                 else{
-                    LOGGER.log(Level.INFO, "{0}: Retrieving cached data.", new Timestamp(System.currentTimeMillis()));
+                    LOGGER.log(Level.INFO, "{0}: Retrieving cached data.",
+                               new Timestamp(System.currentTimeMillis()));
                     m = (Model)(rdfCollection.toArray()[ID2POSITION.get(session_id).preincrement()]);
                 }
                 break;
             case "backward":
-                LOGGER.log(Level.INFO, "{0}: Retrieving cached data.", new Timestamp(System.currentTimeMillis()));
+                LOGGER.log(Level.INFO, "{0}: Retrieving cached data.",
+                           new Timestamp(System.currentTimeMillis()));
                 m = (Model)(rdfCollection.toArray()[ID2POSITION.get(session_id).predecrement()]);
                 break;
         }
         if(m == null){
-            LOGGER.log(Level.WARNING, "{0}: No data found.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.WARNING, "{0}: No data found.",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
             return;
@@ -322,7 +339,8 @@ public class HTTPServerUtils {
             json = object.build().toString();
         }
         catch(JsonException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(500, 0);
             exchange.getResponseBody().close();
             return;
@@ -330,7 +348,8 @@ public class HTTPServerUtils {
         exchange.sendResponseHeaders(200, json.getBytes().length);
         exchange.getResponseBody().write(json.getBytes());
         exchange.getResponseBody().close();
-        LOGGER.log(Level.INFO, "{0}: Responded to request for data.", new Timestamp(System.currentTimeMillis()));
+        LOGGER.log(Level.INFO, "{0}: Responded to request for data.",
+                   new Timestamp(System.currentTimeMillis()));
     }
     
     /**
@@ -339,10 +358,12 @@ public class HTTPServerUtils {
      * @param exchange
      * @throws IOException 
      */
-    private static void doDeleteData(HttpExchange exchange, String session_id) throws IOException{
+    private static void doDeleteData(HttpExchange exchange, String session_id)
+            throws IOException{
         Map<String,String> params = retrieveQueryParameters(exchange);
         if(params.containsKey("numberOfTriples") && Integer.parseInt(params.get("numberOfTriples")) == 0){
-            ID2MODEL_LIST.get(session_id).remove((Model)ID2MODEL_LIST.get(session_id).toArray()[ID2MODEL_LIST.get(session_id).size()-1]);
+            ID2MODEL_LIST.get(session_id).remove((Model)ID2MODEL_LIST.get(session_id)
+                                                                     .toArray()[ID2MODEL_LIST.get(session_id).size()-1]);
             ID2POSITION.get(session_id).postdecrement();
             exchange.sendResponseHeaders(202, 0);
             exchange.getResponseBody().close();
@@ -359,12 +380,14 @@ public class HTTPServerUtils {
      * @param exchange
      * @throws IOException 
      */
-    private static void doPostData(HttpExchange exchange, String session_id) throws IOException{
+    private static void doPostData(HttpExchange exchange, String session_id)
+            throws IOException{
         JsonReader input = Json.createReader(exchange.getRequestBody());
         JsonStructure topLevelObject = input.read();
         try{
             JsonArray annotations = topLevelObject.getValue("/annotations").asJsonArray();
-            int numberOfAnnotatedModels = Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations").toString().replace("\"", ""));
+            int numberOfAnnotatedModels=Integer.parseInt(topLevelObject.getValue("/numberOfAnnotations")
+                                                                       .toString().replace("\"", ""));
             StringBuilder sb = new StringBuilder();
             sb.append("BASE <http://github.com/Fuchs-David/Annotator/tree/master/src/ontology/>\n");
             sb.append("INSERT DATA {\n");
@@ -380,13 +403,22 @@ public class HTTPServerUtils {
                 JsonValue annotation = annotations.get(i);
                 if(annotation.getValueType().equals(ValueType.NULL)) continue;
                 int p = Integer.parseInt(annotation.asJsonObject().getValue("/order").toString().replace("\"", ""));
-                pss.setIri("subject" + i, ((Model)(ID2MODEL_LIST.get(session_id).toArray()[p])).listSubjects().next().getURI());
+                pss.setIri("subject"+i,
+                           ((Model)(ID2MODEL_LIST.get(session_id).toArray()[p])).listSubjects().next().getURI());
                 switch(annotation.asJsonObject().getValue("/type").toString().replace("\"", "")){
-                    case "Work":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Work"));          break;
-                    case "Item":         pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Item"));          break;
-                    case "Manifestation":pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Manifestation")); break;
-                    case "Expression":   pss.setIri("concept" + i, new URL("http://vocab.org/frbr/core.html#term-Expression"));    break;
-                    default: throw new Exception("Illegal concept suggested by the client.");
+                    case "Work":         pss.setIri("concept" + i,
+                                                    new URL("http://vocab.org/frbr/core.html#term-Work"));
+                                         break;
+                    case "Item":         pss.setIri("concept" + i,
+                                                    new URL("http://vocab.org/frbr/core.html#term-Item"));
+                                         break;
+                    case "Manifestation":pss.setIri("concept" + i,
+                                                    new URL("http://vocab.org/frbr/core.html#term-Manifestation"));
+                                         break;
+                    case "Expression":   pss.setIri("concept" + i,
+                                                    new URL("http://vocab.org/frbr/core.html#term-Expression"));
+                                         break;
+                    default:             throw new Exception("Illegal concept suggested by the client.");
                 }
             }
             UpdateRequest update = pss.asUpdate();
@@ -397,22 +429,26 @@ public class HTTPServerUtils {
             ID2POSITION.keySet().remove(session_id);
             exchange.sendResponseHeaders(201, 0);
             exchange.getResponseBody().close();
-            LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.",
+                       new Timestamp(System.currentTimeMillis()));
             ArrayList<Model> rdfCollection = new ArrayList<>();
             rdfCollection.add(RDFUtils.retrieveTriples(exchange, session_id));
             ID2MODEL_LIST.put(session_id, rdfCollection);
             ID2POSITION.put(session_id, new Position(0));
         }
         catch(JsonException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(InterruptedException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
         }
         catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
@@ -424,7 +460,8 @@ public class HTTPServerUtils {
      * @param exchange
      * @throws IOException 
      */
-    private static void handleAuthentication(HttpExchange exchange) throws IOException {
+    private static void handleAuthentication(HttpExchange exchange)
+            throws IOException {
         String session_id = retrieveSessionID(exchange);
         if(session_id.equals("")) session_id = createSession(exchange);
         // Dispatch allowed request methods.
@@ -448,7 +485,8 @@ public class HTTPServerUtils {
                             if(loggedInSuccessfully){
                                 EMAIL2STATE.put(ID2USER.get(session_id).email, loggedInSuccessfully);
                                 LOGGER.log(Level.INFO, "{0}: Successfully logged in user "
-                                        + ID2USER.get(session_id).email, new Timestamp(System.currentTimeMillis()));
+                                        + ID2USER.get(session_id).email,
+                                        new Timestamp(System.currentTimeMillis()));
                             }
                             break;
 
@@ -458,49 +496,57 @@ public class HTTPServerUtils {
             }
         }
         catch(TransformerConfigurationException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(TransformerException | JsonException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
         catch(Exception ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(400, 0);
             exchange.getResponseBody().close();
         }
     }
     
     /**
-     * Create account for new user provided his credentials are syntacticly valid.
+     * Create account for new user provided his credentials are valid.
      * 
      * @param root
      * @param exchange
      * @return
      * @throws IOException 
      */
-    private static boolean createAccount(JsonStructure root, HttpExchange exchange) throws IOException{
-        LOGGER.log(Level.INFO, "{0}: Creating a new account.", new Timestamp(System.currentTimeMillis()));
+    private static boolean createAccount(JsonStructure root, HttpExchange exchange)
+            throws IOException{
+        LOGGER.log(Level.INFO, "{0}: Creating a new account.",
+                   new Timestamp(System.currentTimeMillis()));
         String email = root.getValue("/email").toString().replace("\"", "");
         String password = root.getValue("/password").toString().replace("\"", "");
         String repeatedPassword = root.getValue("/repeatedPassword").toString().replace("\"", "");
         if(!validateEmailAddress(email)){
-            LOGGER.log(Level.INFO, "Invalid e-mail address: " + email, new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "Invalid e-mail address: " + email,
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(406, 0);
             exchange.getResponseBody().close();
             return false;
         }
         if(EMAIL2USER.containsKey(email)){
-            LOGGER.log(Level.INFO, "E-mail " + email + " is already in use.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "E-mail " + email + " is already in use.",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(409, 0);
             exchange.getResponseBody().close();
             return false;
         }
         if(!password.equals(repeatedPassword)){
-            LOGGER.log(Level.INFO, "Password and repeated password are different.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "Password and repeated password are different.",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(406, 0);
             exchange.getResponseBody().close();
             return false;
@@ -510,7 +556,8 @@ public class HTTPServerUtils {
         EMAIL2USER.put(email, user);
         exchange.sendResponseHeaders(201, 0);
         exchange.getResponseBody().close();
-        LOGGER.log(Level.INFO, "{0}: Successfully created account with e-mail address " + email, new Timestamp(System.currentTimeMillis()));
+        LOGGER.log(Level.INFO, "{0}: Successfully created account with e-mail address " + email,
+                   new Timestamp(System.currentTimeMillis()));
         return true;
     }
     
@@ -522,9 +569,11 @@ public class HTTPServerUtils {
      * @return
      * @throws IOException 
      */
-    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange, boolean sendHeaders) throws IOException{
+    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange, boolean sendHeaders)
+            throws IOException{
         String email = root.getValue("/email").toString().replace("\"", "");
-        LOGGER.log(Level.INFO, "Initiating login for user " + email, new Timestamp(System.currentTimeMillis()));
+        LOGGER.log(Level.INFO, "Initiating login for user " + email,
+                   new Timestamp(System.currentTimeMillis()));
         String password = root.getValue("/password").toString().replace("\"", "");
         if(!validateEmailAddress(email) || !EMAIL2USER.containsKey(email)){
             exchange.sendResponseHeaders(404, 0);
@@ -532,19 +581,22 @@ public class HTTPServerUtils {
             return false;
         }
         if(!EMAIL2USER.get(email).checkPasswordHash(password)){
-            LOGGER.log(Level.INFO, "Login for user " + email + " failed due to wrong password ", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "Login for user " + email + " failed due to wrong password ",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(401, 0);
             exchange.getResponseBody().close();
             return false;
         }
         ID2USER.put(session_id, EMAIL2USER.get(email));
         if(sendHeaders){
-            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.",
+                       new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(200, 0);
             exchange.getResponseBody().close();
         }
         else
-            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in into existing account.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in into existing account.",
+                       new Timestamp(System.currentTimeMillis()));
         return true;
     }
     
@@ -574,7 +626,9 @@ public class HTTPServerUtils {
         String session_id = "";
         if(h.containsKey("Cookie"))
             for(String cookie : h.get("Cookie"))
-                if(!session_id.equals("") && cookie.startsWith("SESSION_ID=") && EMAIL2STATE.get(ID2USER.get(cookie.split("=")[1]).email))
+                if(!session_id.equals("")
+                   && cookie.startsWith("SESSION_ID=")
+                   && EMAIL2STATE.get(ID2USER.get(cookie.split("=")[1]).email))
                     session_id = cookie.split("=")[1];
                 else if(session_id.equals("") && cookie.startsWith("SESSION_ID="))
                     session_id = cookie.split("=")[1];
@@ -634,7 +688,8 @@ public class HTTPServerUtils {
             InternetAddress address = new InternetAddress(email);
             address.validate();
         } catch (AddressException ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             return false;
         }
         return true;
