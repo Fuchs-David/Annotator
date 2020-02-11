@@ -15,7 +15,26 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    
+    <profiles>
+        <profile>
+            <id>Windows</id>
+            <activation>
+                <os><family>Windows</family></os>
+            </activation>
+            <properties>
+                <script.extension>.bat</script.extension>
+            </properties>
+        </profile>
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os><family>unix</family></os>
+            </activation>
+            <properties>
+                <script.extension>.sh</script.extension>
+            </properties>
+        </profile>
+    </profiles>
     <build>
       <defaultGoal>jar</defaultGoal>
       <directory>${basedir}/target</directory>
@@ -85,7 +104,7 @@
                  <goal>exec</goal>
               </goals>
               <configuration>
-                  <executable>setup.sh</executable>
+                  <executable>./setup${script.extension}</executable>
                   <workingDirectory>${basedir}</workingDirectory>
               </configuration>
             </execution>
