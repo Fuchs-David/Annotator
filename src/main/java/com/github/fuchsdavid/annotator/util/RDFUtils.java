@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
@@ -83,40 +85,45 @@ public class RDFUtils {
             String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
             do{
                 ParameterizedSparqlString pss;
+                ParameterizedSparqlString p;
                 int offset;
                 if(Main.RNG.nextInt(100)<1){
                     pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
-                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
+                    p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
                     pss.setIri("current_annotator", new URL(currentAnnotator));
-                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not annotated by: "
+                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated by: "
                                            + Main.ID2USER.get(session_id).email,
                                new Timestamp(System.currentTimeMillis()));
-                    ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
-                    int numberOfResourcesForCrossAnnotation;
-                    if(rs.hasNext())
-                        numberOfResourcesForCrossAnnotation = Main.RNG.nextInt(rs.next().getLiteral("count").getInt());
-                    else continue;
-                    offset = Main.RNG.nextInt(numberOfResourcesForCrossAnnotation);
                 }
                 else{
                     pss = new ParameterizedSparqlString(queryForNewAnnotation);
-                    ParameterizedSparqlString p = new ParameterizedSparqlString(queryForNumberOfNotAnnotatedResorces);
-                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not annotated at all yet.",
+                    p = new ParameterizedSparqlString(queryForNumberOfNotAnnotatedResorces);
+                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated.",
                                new Timestamp(System.currentTimeMillis()));
-                    ResultSet rs = QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery()).execSelect();
-                    int numberOfResourcesForAnnotation;
-                    if(rs.hasNext())
-                        numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
-                    else continue;
-                    offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
                 }
+                QueryExecution qe=QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery());
+                qe.setTimeout(1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+                ResultSet rs = qe.execSelect();
+                int numberOfResourcesForAnnotation;
+                try{
+                    numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
+                    qe.close();
+                }
+                catch(Exception ex){
+                    qe.close();
+                    continue;
+                }
+                offset = Main.RNG.nextInt(numberOfResourcesForAnnotation);
                 pss.setLiteral("offset", offset);
                 pss.setLiteral("limit", 1);
                 pss.setIri("current_annotator", new URL(currentAnnotator));
                 LOGGER.log(Level.INFO, "{0}: Querying SPARQL endpoint for user: " + Main.ID2USER.get(session_id).email,
                            new Timestamp(System.currentTimeMillis()));
-                m = QueryExecutionFactory.sparqlService(SPARQLendpoint,pss.asQuery()).execConstruct();
+                qe=QueryExecutionFactory.sparqlService(SPARQLendpoint,pss.asQuery());
+                qe.setTimeout(1, TimeUnit.SECONDS, 2, TimeUnit.SECONDS);
+                m = qe.execConstruct();
                 m.setNsPrefixes(PM);
+                qe.close();
             }while(m==null || m.isEmpty());
         }
         catch (IOException ex) {
