@@ -494,12 +494,10 @@ public class HTTPServerUtils {
                             break;
                 case "POST":JsonReader input = Json.createReader(exchange.getRequestBody());
                             JsonStructure root = input.read();
-                            boolean accountCreatedSuccessfully = true;
                             if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
-                                if(!(accountCreatedSuccessfully = createAccount(root, exchange))) return;
-                            boolean loggedInSuccessfully = login(session_id, root, exchange, !accountCreatedSuccessfully);
-                            if(loggedInSuccessfully){
-                                EMAIL2STATE.put(ID2USER.get(session_id).email, loggedInSuccessfully);
+                                if(!createAccount(root, exchange)) return;
+                            if(login(session_id, root, exchange)){
+                                EMAIL2STATE.put(ID2USER.get(session_id).email, true);
                                 LOGGER.log(Level.INFO, "{0}: Successfully logged in user "
                                         + ID2USER.get(session_id).email,
                                         new Timestamp(System.currentTimeMillis()));
@@ -553,14 +551,14 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return false;
         }
-        if(EMAIL2USER.containsKey(email)){
+        else if(EMAIL2USER.containsKey(email)){
             LOGGER.log(Level.INFO, "E-mail " + email + " is already in use.",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(409, 0);
             exchange.getResponseBody().close();
             return false;
         }
-        if(!password.equals(repeatedPassword)){
+        else if(!password.equals(repeatedPassword)){
             LOGGER.log(Level.INFO, "Password and repeated password are different.",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(406, 0);
@@ -585,7 +583,7 @@ public class HTTPServerUtils {
      * @return
      * @throws IOException 
      */
-    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange, boolean sendHeaders)
+    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange)
             throws IOException{
         String email = root.getValue("/email").toString().replace("\"", "");
         LOGGER.log(Level.INFO, "Initiating login for user " + email,
@@ -596,7 +594,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return false;
         }
-        if(!EMAIL2USER.get(email).checkPasswordHash(password)){
+        else if(!EMAIL2USER.get(email).checkPasswordHash(password)){
             LOGGER.log(Level.INFO, "Login for user " + email + " failed due to wrong password ",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(401, 0);
@@ -604,7 +602,7 @@ public class HTTPServerUtils {
             return false;
         }
         ID2USER.put(session_id, EMAIL2USER.get(email));
-        if(sendHeaders){
+        if(exchange.getResponseHeaders().isEmpty()){
             LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(200, 0);
