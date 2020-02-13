@@ -85,6 +85,7 @@ public class HTTPServerUtils {
             server.createContext("/", HTTPServerUtils::handleRequest);
             server.createContext("/data", HTTPServerUtils::handleDataRequest);
             server.createContext("/auth", HTTPServerUtils::handleAuthentication);
+            server.createContext("/s/", HTTPServerUtils::doGetStaticFiles);
             server.start();
         }
         catch (IOException ex) {
@@ -103,7 +104,38 @@ public class HTTPServerUtils {
     }
     
     /**
-     * Handles client requests for static content.
+     * Handles GET requests for static content.
+     * 
+     * @param exchange
+     * @param session_id
+     */
+    private static void doGetStaticFiles(HttpExchange exchange)
+            throws IOException {
+        if(exchange.getRequestMethod().equals("GET")){
+            String path = "/www" + exchange.getRequestURI().getPath();
+            String[] ext = path.split("\\.");
+            switch(ext[ext.length-1]){
+                case "css": exchange.getResponseHeaders().add("content-type",
+                                                              "text/css");
+                            break;
+                case "js":  exchange.getResponseHeaders().add("content-type",
+                                                              "text/javascript+module");
+                            break;
+            }
+            try (InputStream is = Main.class.getResourceAsStream(path)) {
+                exchange.sendResponseHeaders(200, is.available());
+                is.transferTo(exchange.getResponseBody());
+            }
+            exchange.getResponseBody().close();
+        }
+        else{
+            exchange.sendResponseHeaders(405, 0);
+            exchange.getResponseBody().close();
+        }
+    }
+    
+    /**
+     * Handles client requests for content.
      * 
      * @param exchange
      * @throws IOException 
@@ -136,7 +168,7 @@ public class HTTPServerUtils {
             exchange.getResponseBody().close();
             return;
         }
-        if(!exchange.getRequestURI().getPath().contains(".") && !ID2USER.containsKey(session_id)){
+        if(!ID2USER.containsKey(session_id)){
             LOGGER.log(Level.INFO, "{0}: Unauthorized access, redirecting to /auth",
                        new Timestamp(System.currentTimeMillis()));
             exchange.getResponseHeaders().add("Location", "/auth");
@@ -146,12 +178,8 @@ public class HTTPServerUtils {
         }
         if(exchange.getRequestURI().getPath().endsWith("/"))
             path += "www" + exchange.getRequestURI().getPath() + "index.xhtml";
-        else if(!exchange.getRequestURI().getPath().contains("."))
-            path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         else
-            path += "www" + exchange.getRequestURI().getPath();
-        LOGGER.log(Level.FINEST, "{0}: Processing GET request for path " + path,
-                   new Timestamp(System.currentTimeMillis()));
+            path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         if(exchange.getRequestURI().getPath().equals("/")){
             if(!ID2MODEL_LIST.containsKey(session_id)){
                 Model m = RDFUtils.retrieveTriples(exchange,session_id);
@@ -198,19 +226,7 @@ public class HTTPServerUtils {
             }
         }
         else{
-            String[] ext = path.split("\\.");
-            switch(ext[ext.length-1]){
-                case "css": exchange.getResponseHeaders().add("content-type",
-                                                              "text/css");
-                            break;
-                case "js":  exchange.getResponseHeaders().add("content-type",
-                                                              "text/javascript+module");
-                            break;
-            }
-            try (InputStream is = Main.class.getResourceAsStream(path)) {
-                exchange.sendResponseHeaders(200, is.available());
-                is.transferTo(exchange.getResponseBody());
-            }
+            exchange.sendResponseHeaders(404, 0);
             exchange.getResponseBody().close();
         }
     }
