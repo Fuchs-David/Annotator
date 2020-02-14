@@ -4,7 +4,6 @@ jdk:
 
 before_install:
   - pwd
-  - cd java
   - echo $TRAVIS_COMMIT
   - echo $TRAVIS_TAG
   - echo $TRAVIS_BRANCH
@@ -18,4 +17,4 @@ cache:
 install: true
 
 script:
-  - "mvn verify"
+  - "mvn verify -e"
