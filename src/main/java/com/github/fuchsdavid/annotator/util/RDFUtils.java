@@ -91,6 +91,7 @@ public class RDFUtils {
                     pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
                     p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
                     pss.setIri("current_annotator", new URL(currentAnnotator));
+                    p.setIri("current_annotator", new URL(currentAnnotator));
                     LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated by: "
                                            + Main.ID2USER.get(session_id).email,
                                new Timestamp(System.currentTimeMillis()));
@@ -108,6 +109,7 @@ public class RDFUtils {
                 try{
                     numberOfResourcesForAnnotation = rs.next().getLiteral("count").getInt();
                     qe.close();
+                    if(numberOfResourcesForAnnotation <= 0) continue;
                 }
                 catch(Exception ex){
                     qe.close();
