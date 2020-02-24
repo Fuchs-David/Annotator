@@ -112,26 +112,33 @@ public class HTTPServerUtils {
     private static void doGetStaticFiles(HttpExchange exchange)
             throws IOException {
         if(exchange.getRequestMethod().equals("GET")){
-            String path = "/www" + exchange.getRequestURI().getPath();
+            String path = "/www" + (exchange.getRequestURI().getPath().contains(".") ?
+                                    exchange.getRequestURI().getPath()               :
+                                    exchange.getRequestURI().getPath() + ".xhtml");
             String[] ext = path.split("\\.");
             switch(ext[ext.length-1]){
-                case "css": exchange.getResponseHeaders().add("content-type",
-                                                              "text/css");
-                            break;
-                case "js":  exchange.getResponseHeaders().add("content-type",
-                                                              "text/javascript+module");
-                            break;
+                case "css":  exchange.getResponseHeaders().add("content-type",
+                                                               "text/css");
+                             break;
+                case "js":   exchange.getResponseHeaders().add("content-type",
+                                                               "text/javascript+module");
+                             break;
+                case "xhtml":exchange.getResponseHeaders().add("content-type",
+                                                               "application/xhtml+xml");
+                             break;
+                default:     exchange.sendResponseHeaders(406, 0);
+                             exchange.getResponseBody().close();
+                             return;
             }
             try (InputStream is = Main.class.getResourceAsStream(path)) {
                 exchange.sendResponseHeaders(200, is.available());
                 is.transferTo(exchange.getResponseBody());
             }
-            exchange.getResponseBody().close();
         }
         else{
             exchange.sendResponseHeaders(405, 0);
-            exchange.getResponseBody().close();
         }
+        exchange.getResponseBody().close();
     }
     
     /**

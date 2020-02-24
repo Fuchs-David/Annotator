@@ -45,9 +45,12 @@ input#submit {
 }
 .right {
     position: absolute;
-    top: 12em;
+    top: 4em;
     right: 0em;
-    width: 30%;
+    width: 28%;
+}
+.right div {
+    padding-bottom: 0.5em;
 }
 .left {
     width: 70%;
