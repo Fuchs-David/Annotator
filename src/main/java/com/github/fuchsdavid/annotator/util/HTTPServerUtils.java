@@ -592,7 +592,7 @@ public class HTTPServerUtils {
                    new Timestamp(System.currentTimeMillis()));
         String password = root.getValue("/password").toString().replace("\"", "");
         if(!validateEmailAddress(email) || !EMAIL2USER.containsKey(email)){
-            exchange.sendResponseHeaders(404, 0);
+            exchange.sendResponseHeaders(401, 0);
             exchange.getResponseBody().close();
             return;
         }

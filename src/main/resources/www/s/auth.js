@@ -17,10 +17,20 @@
 var sendData = new XMLHttpRequest();
 
 sendData.onreadystatechange = function(){
-    if(sendData.readyState === XMLHttpRequest.DONE &&
-            (sendData.status === 200 || sendData.status === 201)){
-        alert("Authentication succeeded.");
-        location.href = "/";
+    if(sendData.readyState === XMLHttpRequest.DONE){
+        switch(sendData.status){
+            case 200:
+            case 201:alert("Authentication succeeded.");
+                     location.href = "/";
+                     break;
+            case 401:alert("Authentication failed.\nEither e-mail has not been registered yet or the password is wrong.");
+                     break;
+            case 406:alert("Account creation failed.\nEither e-mail is not a valid e-mail address or password \
+and repeated password are different.");
+                     break;
+            case 409:alert("Account creation failed.\nE-mail is already registered.");
+                     break;
+        }
     }
 };
 function submitCredentials(){
