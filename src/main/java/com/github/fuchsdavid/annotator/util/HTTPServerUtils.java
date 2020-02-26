@@ -503,12 +503,7 @@ public class HTTPServerUtils {
                             JsonStructure root = input.read();
                             if(root.getValue("/createAccount").getValueType().equals(ValueType.TRUE))
                                 if(!createAccount(root, exchange)) return;
-                            if(login(session_id, root, exchange)){
-                                EMAIL2STATE.put(ID2USER.get(session_id).email, true);
-                                LOGGER.log(Level.INFO, "{0}: Successfully logged in user "
-                                        + ID2USER.get(session_id).email,
-                                        new Timestamp(System.currentTimeMillis()));
-                            }
+                            login(session_id, root, exchange);
                             break;
 
 
@@ -590,7 +585,7 @@ public class HTTPServerUtils {
      * @return
      * @throws IOException 
      */
-    private static boolean login(String session_id, JsonStructure root, HttpExchange exchange)
+    private static void login(String session_id, JsonStructure root, HttpExchange exchange)
             throws IOException{
         String email = root.getValue("/email").toString().replace("\"", "");
         LOGGER.log(Level.INFO, "Initiating login for user " + email,
@@ -599,26 +594,26 @@ public class HTTPServerUtils {
         if(!validateEmailAddress(email) || !EMAIL2USER.containsKey(email)){
             exchange.sendResponseHeaders(404, 0);
             exchange.getResponseBody().close();
-            return false;
+            return;
         }
         else if(!EMAIL2USER.get(email).checkPasswordHash(password)){
             LOGGER.log(Level.INFO, "Login for user " + email + " failed due to wrong password ",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(401, 0);
             exchange.getResponseBody().close();
-            return false;
+            return;
         }
         ID2USER.put(session_id, EMAIL2USER.get(email));
         if(exchange.getResponseHeaders().isEmpty()){
-            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.",
+            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in into existing account.",
                        new Timestamp(System.currentTimeMillis()));
             exchange.sendResponseHeaders(200, 0);
             exchange.getResponseBody().close();
         }
         else
-            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in into existing account.",
+            LOGGER.log(Level.INFO, "{0}: User " + email + " successfully logged in after account creation.",
                        new Timestamp(System.currentTimeMillis()));
-        return true;
+        EMAIL2STATE.put(email, true);
     }
     
     /**
