@@ -21,8 +21,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <title>Authentication | DBpedia annotator</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta name="author" content="David Fuchs"/>
-        <link rel="stylesheet" type="text/css" href="s/annotator.css"/>
         <script src="s/auth.js"></script>
+        <style>
+            body {
+                margin-left: 10%;
+                margin-right: 10%;
+                max-width: 50em;
+            }
+            .fixed label {
+                display: inline-block;
+                width: 8em;
+            }
+        </style>
     </head>
     <body>
         <h1>DBpedia annotator</h1>
@@ -52,9 +62,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                        onclick="(document.getElementById('hide').style.display === 'none' ? document.getElementById('hide').style.display = 'block' : document.getElementById('hide').style.display = 'none')"/>
                 <label for="createAccount">Create a new account?</label>
             </div>
-            <div><label for="email">E-mail:</label><input type="email" name="email" id="email"/></div>
-            <div><label for="password">Password:</label><input type="password" name="password" id="password"/></div>
-            <div id="hide" style="display: none;">
+            <div class="fixed"><label for="email">E-mail:</label><input type="email" name="email" id="email"/></div>
+            <div class="fixed"><label for="password">Password:</label><input type="password" name="password" id="password"/></div>
+            <div class="fixed" id="hide" style="display: none;">
                 <label for="repeatedPassword">Repeat password:</label><input type="password" name="repeatedPassword" id="repeatedPassword"/>
             </div>
             <input type="button" name="submit" id="submit" value="Submit" onclick="submitCredentials()"/>

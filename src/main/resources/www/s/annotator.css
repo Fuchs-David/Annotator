@@ -62,3 +62,9 @@ tr>th {
     background: gray;
     color: white;
 }
+dl {
+    max-width: 50em;
+}
+dl dt {
+    font-size: 1.25em;
+}
