@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2020 David Fuchs
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>DBpedia annotator | specification of FRBR entities</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta content="David Fuchs" name="author"/>
+        <link href="annotator.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body>
+        <h1>Specification of FRBR entities</h1>
+        <dl>
+            <dt>Work</dt>
+            <dd>
+Instances categorized as belonging to the FRBR class Work are concepts
+identified in artistic and intellectual expressions. The substance of a work is an idea.<br/>
+A collection of works (e.g. a periodical) is a work as well as its members.<br/>
+A work is a product of an intellectual process of which we have only indirect evidence (e.g. its expression, work order, etc.).
+            </dd>
+            <dt>Expression</dt>
+            <dd>
+Instances categorized as belonging to the FRBR class Expression are intellectual or artistic
+realisations of works in the form of identifiable immaterial objects. Expressions cannot exist
+without a physical carrier, but do not depend on any single carrier. They can exist on any number of carriers simultaneously.<br/>
+Potential carriers of an expression also include human memory.<br/>
+Any change in form might create a new expression (e.g. alpha-numeric notation to spoken word) and it might require
+knowing the genre to identify features which are essential to the expression (e.g. typeface and page layout).<br/>
+A collection of expressions (e.g. an anthology of poems) is a an expression as well as the members of the collection themselves.
+            </dd>
+            <dt>Manifestation</dt>
+            <dd>
+Instances categorized as belonging to the FRBR class Manifestation represent all
+items that have been created as part of a series (e.g. an edition of a book). The item must be identifiable as a copy belonging
+to a manifestation, but does not need to exhibit all the features or traits of the manifestation (e.g. due to production events).<br/>
+Physical objects (e.g. a manuscript or draft) not intended to be produced in multiple copies are still considered to be manifestations.
+            </dd>
+            <dt>Item</dt>
+            <dd>
+Instances categorized as belonging to the FRBR class Item are physical copies - exemplars of a single manifestation.
+            </dd>
+        </dl>
+    </body>
+</html>
