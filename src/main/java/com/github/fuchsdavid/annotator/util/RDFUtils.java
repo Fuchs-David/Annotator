@@ -46,8 +46,6 @@ public class RDFUtils {
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
     
     private static String queryForNewAnnotation;
-    private static String queryForCrossAnnotatorAgreement;
-    private static String queryForNumberOfAnnotations;
     private static String queryForNumberOfNotAnnotatedResorces;
     
     static{
@@ -55,12 +53,6 @@ public class RDFUtils {
             queryForNewAnnotation = IOUtils.toString(
                                         Main.class.getResourceAsStream("/sparql/resourcesToBeAnnotatedQuery.sparql"),
                                         StandardCharsets.UTF_8.name());
-            queryForCrossAnnotatorAgreement = IOUtils.toString(
-                                        Main.class.getResourceAsStream("/sparql/crossAnnotatorAgreementQuery.sparql"),
-                                        StandardCharsets.UTF_8.name());
-            queryForNumberOfAnnotations = IOUtils.toString(
-                                    Main.class.getResourceAsStream("/sparql/numberOfAnnotatedResourcesByOtherUsers.sparql"),
-                                    StandardCharsets.UTF_8.name());
             queryForNumberOfNotAnnotatedResorces = IOUtils.toString(
                                     Main.class.getResourceAsStream("/sparql/numberOfResourcesNotYetAnnotated.sparql"),
                                     StandardCharsets.UTF_8.name());
@@ -87,21 +79,10 @@ public class RDFUtils {
                 ParameterizedSparqlString pss;
                 ParameterizedSparqlString p;
                 int offset;
-                if(Main.RNG.nextInt(100)<1){
-                    pss = new ParameterizedSparqlString(queryForCrossAnnotatorAgreement);
-                    p = new ParameterizedSparqlString(queryForNumberOfAnnotations);
-                    pss.setIri("current_annotator", new URL(currentAnnotator));
-                    p.setIri("current_annotator", new URL(currentAnnotator));
-                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated by: "
-                                           + Main.ID2USER.get(session_id).email,
-                               new Timestamp(System.currentTimeMillis()));
-                }
-                else{
-                    pss = new ParameterizedSparqlString(queryForNewAnnotation);
-                    p = new ParameterizedSparqlString(queryForNumberOfNotAnnotatedResorces);
-                    LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated.",
-                               new Timestamp(System.currentTimeMillis()));
-                }
+                pss = new ParameterizedSparqlString(queryForNewAnnotation);
+                p = new ParameterizedSparqlString(queryForNumberOfNotAnnotatedResorces);
+                LOGGER.log(Level.INFO, "{0}: Finding the number of resources not yet annotated.",
+                           new Timestamp(System.currentTimeMillis()));
                 QueryExecution qe=QueryExecutionFactory.sparqlService(SPARQLendpoint, p.asQuery());
                 qe.setTimeout(1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
                 ResultSet rs = qe.execSelect();
