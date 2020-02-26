@@ -29,11 +29,9 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.json.Json;
@@ -103,7 +101,8 @@ public class Main {
                 User u = new User(email, salt, passwordHash,true);
                 EMAIL2USER.put(email, u);
             }
-            LOGGER.log(Level.INFO, "{0}: Loaded user credentials from storage.", new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.INFO, "{0}: Loaded user credentials from storage.",
+                       new Timestamp(System.currentTimeMillis()));
             DOCUMENT_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             SPARQLendpoint = (new URL("http://localhost:3030/fuseki")).toExternalForm();
             CACHED_FILES.put(INDEX,DOCUMENT_BUILDER.parse(Main.class.getResourceAsStream(INDEX)));
@@ -120,7 +119,8 @@ public class Main {
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                LOGGER.log(Level.INFO, "{0}: Shutdown HTTP server on port " + port + ".", new Timestamp(System.currentTimeMillis()));
+                LOGGER.log(Level.INFO, "{0}: Shutdown HTTP server on port " + port + ".",
+                           new Timestamp(System.currentTimeMillis()));
             }));
             Scanner scanner = new Scanner(Main.class.getResourceAsStream(PREFIXES));
             while(scanner.hasNextLine()){
@@ -131,14 +131,17 @@ public class Main {
             }
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
         catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(), new Timestamp(System.currentTimeMillis()));
+            LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
+                       new Timestamp(System.currentTimeMillis()));
             System.exit(1);
         }
     }
