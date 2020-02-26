@@ -62,6 +62,10 @@ getData.onreadystatechange = function(){
             window.scrollTo(0,0);
         }
     }
+    else if(getData.readyState === XMLHttpRequest.DONE && getData.status !== 200){
+        alert("Data could not have been retrieved from the server.\n\
+Please try to request the data again.");
+    }
 };
 
 sendData.onreadystatechange = function(){
@@ -69,6 +73,9 @@ sendData.onreadystatechange = function(){
         alert("Data have been successfully uploaded to the server.");
         window.sessionStorage.clear();
         location.reload(true);
+    }
+    else if(sendData.readyState === XMLHttpRequest.DONE && sendData.status !== 201){
+        alert("Failed to upload data to the server.");
     }
 };
 
