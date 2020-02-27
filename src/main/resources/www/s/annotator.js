@@ -60,6 +60,7 @@ getData.onreadystatechange = function(){
             if(data.getElementsByTagName("tbody").length === 0) data.appendChild(document.createElement("tbody"));
             mergeCells();
             window.scrollTo(0,0);
+            document.getElementById("loading_icon").style.display = 'none';
         }
     }
     else if(getData.readyState === XMLHttpRequest.DONE && getData.status !== 200){
@@ -84,6 +85,7 @@ function requestData(direction){
         dir = direction;
         getData.open("GET","data?direction=" + direction);
         getData.send();
+        document.getElementById("loading_icon").style.display = 'block';
     }
 }
 

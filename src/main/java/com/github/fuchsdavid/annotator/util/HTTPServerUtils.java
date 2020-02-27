@@ -126,6 +126,9 @@ public class HTTPServerUtils {
                 case "xhtml":exchange.getResponseHeaders().add("content-type",
                                                                "application/xhtml+xml");
                              break;
+                case "gif":  exchange.getResponseHeaders().add("content-type",
+                                                               "image/gif");
+                             break;
                 default:     exchange.sendResponseHeaders(406, 0);
                              exchange.getResponseBody().close();
                              return;

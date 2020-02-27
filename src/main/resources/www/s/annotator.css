@@ -68,3 +68,8 @@ dl {
 dl dt {
     font-size: 1.25em;
 }
+#loading_icon {
+    position: fixed;
+    top: 25em;
+    margin-left: 30%;
+}
