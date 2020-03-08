@@ -647,8 +647,10 @@ public class HTTPServerUtils {
             for(String cookie : h.get("Cookie"))
                 if(!session_id.equals("")
                    && cookie.startsWith("SESSION_ID=")
-                   && EMAIL2STATE.get(ID2USER.get(cookie.split("=")[1]).email))
+                   && EMAIL2STATE.get(ID2USER.get(cookie.split("=")[1]).email)){
                     session_id = cookie.split("=")[1];
+                    break;
+                }
                 else if(session_id.equals("") && cookie.startsWith("SESSION_ID="))
                     session_id = cookie.split("=")[1];
         return session_id;
