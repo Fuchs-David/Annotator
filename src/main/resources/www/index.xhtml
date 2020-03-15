@@ -49,7 +49,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <thead><tr><th>DBpedia predicate</th><th>DBpedia object</th></tr></thead>
             <tbody></tbody>
         </table>
-        <form class="right">
+        <div class="right">
+        <p>Please select the class, which you think the DBpedia resource belongs to
+        based on the predicates and their values associated with it.</p>
+        <p>To send all resources annotated so far, press the Submit button.<br/>
+        To continue to the next resource without submitting the annotations yet, press the Next button.<br/>
+        If you want to revise an annotation you have not yet sent to the server, press the Previous button
+        to get to an earlier DBpedia resource.</p>
+        <form>
             <div>
                 <input type="button" id="previous" value="Previous" onclick="requestData('backward')"/>
                 <input type="button" id="next" value="Next" onclick="requestData('forward')"/>
@@ -89,6 +96,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </div>
             </div>
         </form>
+        </div>
         <img id="loading_icon" src="s/loading.gif" alt="Loading data" width="120" height="120" style="display:none;"/>
     </body>
 </html>
