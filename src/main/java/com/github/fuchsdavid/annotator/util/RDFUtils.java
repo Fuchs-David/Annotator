@@ -20,6 +20,7 @@ import com.github.fuchsdavid.annotator.Main;
 import static com.github.fuchsdavid.annotator.Main.SPARQLendpoint;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -47,6 +48,7 @@ public class RDFUtils {
     
     private static String queryForNewAnnotation;
     private static String queryForNumberOfNotAnnotatedResorces;
+    private static String queryForNumberOfAnnotationsOfCurrentAnnotator;
     
     static{
         try {
@@ -56,6 +58,9 @@ public class RDFUtils {
             queryForNumberOfNotAnnotatedResorces = IOUtils.toString(
                                     Main.class.getResourceAsStream("/sparql/numberOfResourcesNotYetAnnotated.sparql"),
                                     StandardCharsets.UTF_8.name());
+            queryForNumberOfAnnotationsOfCurrentAnnotator = IOUtils.toString(
+                                    Main.class.getResourceAsStream("/sparql/numberOfResourceAnnotatedByCurrentAnnotator.sparql"),
+                                    StandardCharsets.UTF_8);
         }
         catch (IOException ex) {
             Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
@@ -126,5 +131,21 @@ public class RDFUtils {
     public static String getPrefixedName(Resource resource){
         String prefix = PM.getNsURIPrefix(resource.getNameSpace());
         return (prefix == null ? resource.getURI() : prefix + ":" + resource.getLocalName());
+    }
+    
+    public static int getNumberOfAnnotations(HttpExchange exchange, String session_id,String email){
+        try {
+            String currentAnnotator = "mailto:" + Main.ID2USER.get(session_id).email;
+            ParameterizedSparqlString pss = new ParameterizedSparqlString(queryForNumberOfAnnotationsOfCurrentAnnotator);
+            pss.setIri("current_annotator", new URL(currentAnnotator));
+            QueryExecution qe=QueryExecutionFactory.sparqlService(SPARQLendpoint, pss.asQuery());
+            ResultSet rs = qe.execSelect();
+            int numberOfAnnotations = rs.next().getLiteral("count").getInt();
+            qe.close();
+            return numberOfAnnotations;
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return -1;
     }
 }

@@ -18,7 +18,6 @@ package com.github.fuchsdavid.annotator;
 
 import com.github.fuchsdavid.annotator.util.HTTPServerUtils;
 import com.sun.net.httpserver.HttpServer;
-import java.net.BindException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;

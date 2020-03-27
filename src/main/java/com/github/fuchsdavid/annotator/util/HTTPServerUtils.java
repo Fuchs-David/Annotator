@@ -52,6 +52,8 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
@@ -199,6 +201,12 @@ public class HTTPServerUtils {
                 ID2POSITION.put(session_id, new Position(0));
             }
             try{
+                final Integer[] numberOfAnnotations = new Integer[1];
+                Thread thread = new Thread(() -> {
+                    numberOfAnnotations[0] = RDFUtils.getNumberOfAnnotations(exchange, session_id,
+                                                                             Main.ID2USER.get(session_id).email);
+                });
+                thread.start();
                 Document document = DOCUMENT_BUILDER.newDocument();
                 Node root = CACHED_FILES.get(path).getDocumentElement().cloneNode(true);
                 String license = "";
@@ -216,6 +224,8 @@ public class HTTPServerUtils {
                     document.getElementsByTagName("body").item(0).appendChild(p);
                     p.setTextContent("There are no records to show.");
                 }
+                thread.join();
+                document.getElementsByTagName("span").item(0).setTextContent(numberOfAnnotations[0].toString());
                 Transformer t = TF.newTransformer();
                 try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                     t.transform(new DOMSource(document), new StreamResult(os));
@@ -233,6 +243,8 @@ public class HTTPServerUtils {
                 LOGGER.log(Level.SEVERE, "{0}: " + ex.getMessage(),
                            new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(HTTPServerUtils.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         else{
@@ -319,6 +331,12 @@ public class HTTPServerUtils {
         Collection<Model> rdfCollection = ID2MODEL_LIST.get(session_id);
         Map<String,String> params = retrieveQueryParameters(exchange);
         Model m = null;
+        final Integer[] numberOfAnnotations = new Integer[1];
+        Thread thread = new Thread(() -> {
+            numberOfAnnotations[0] = RDFUtils.getNumberOfAnnotations(exchange, session_id,
+                                                                     Main.ID2USER.get(session_id).email);
+        });
+        thread.start();
         switch(params.get("direction")){
             case "forward":
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
@@ -339,6 +357,11 @@ public class HTTPServerUtils {
                            new Timestamp(System.currentTimeMillis()));
                 m = (Model)(rdfCollection.toArray()[ID2POSITION.get(session_id).predecrement()]);
                 break;
+        }
+        try {
+            thread.join();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(HTTPServerUtils.class.getName()).log(Level.SEVERE, null, ex);
         }
         if(m == null){
             LOGGER.log(Level.WARNING, "{0}: No data found.",
@@ -361,6 +384,7 @@ public class HTTPServerUtils {
                     createTriple.add("object",statement.getObject().asLiteral().getLexicalForm());
                 array.add(createTriple.build());
             });
+            object.add("numberOfAnnotations", numberOfAnnotations[0]);
             object.add("triples", array);
             json = object.build().toString();
         }

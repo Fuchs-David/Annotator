@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var currentResource = 0;
 var numberOfAnnotations = 0;
 var dir = "forward";
 
@@ -31,7 +32,8 @@ var sendData = new XMLHttpRequest();
 getData.onreadystatechange = function(){
     if(getData.readyState === XMLHttpRequest.DONE && getData.status === 200){
         let data = document.getElementById("data");
-        let triples = JSON.parse(getData.response).triples;
+        let json = JSON.parse(getData.response);
+        let triples = json.triples;
         if(triples.length === 0){
             notifyServerAboutFailure.open("DELETE","data?numberOfTriples=" + triples.length);
             notifyServerAboutFailure.send();
@@ -61,6 +63,9 @@ getData.onreadystatechange = function(){
             mergeCells();
             window.scrollTo(0,0);
             document.getElementById("loading_icon").style.display = 'none';
+            if(json.numberOfAnnotations >= 0)
+                document.getElementById("numberOfAnnotations").innerText = json.numberOfAnnotations + "+" +
+                                                                           window.sessionStorage.length;
         }
     }
     else if(getData.readyState === XMLHttpRequest.DONE && getData.status !== 200){
@@ -91,28 +96,28 @@ function requestData(direction){
 
 function saveData(){
     let radioButtons = document.getElementById("radio_buttons").getElementsByTagName("input");
-    let before = numberOfAnnotations;
+    let before = currentResource;
     for(let i=0; i<radioButtons.length;i++){
         radioButton = radioButtons[i];
         if(radioButton.checked === true){
             let data = new Object();
-            data.order = (dir==="forward" ? numberOfAnnotations++ : numberOfAnnotations--);
+            data.order = (dir==="forward" ? currentResource++ : currentResource--);
             data.type = radioButton.getAttribute("id");
             window.sessionStorage.setItem(data.order,JSON.stringify(data));
             radioButton.checked = false;
         }
     }
-    if(before === numberOfAnnotations){
-        (dir==="forward" ? numberOfAnnotations++ : numberOfAnnotations--);
+    if(before === currentResource){
+        (dir==="forward" ? currentResource++ : currentResource--);
     }
 }
 
 function submitData(){
     saveData();
     let data = new Object();
-    data.numberOfAnnotations = numberOfAnnotations;
-    data.annotations = new Array(numberOfAnnotations+1);
-    for(let i=0;i<numberOfAnnotations;i++){
+    data.numberOfAnnotations = window.sessionStorage.length;
+    data.annotations = new Array(currentResource+1);
+    for(let i=0;i<window.sessionStorage.length;i++){
         data.annotations[i] = JSON.parse(window.sessionStorage.getItem(i));
     }
     sendData.open("POST","data");
