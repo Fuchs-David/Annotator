@@ -64,8 +64,10 @@ getData.onreadystatechange = function(){
             window.scrollTo(0,0);
             document.getElementById("loading_icon").style.display = 'none';
             if(json.numberOfAnnotations >= 0)
-                document.getElementById("numberOfAnnotations").innerText = json.numberOfAnnotations + "+" +
-                                                                           window.sessionStorage.length;
+                document.getElementById("numberOfAnnotations").innerText = json.numberOfAnnotations;
+                document.getElementById("numberOfAnnotationsToSubmit").innerText = window.sessionStorage.length;
+            if(typeof window.sessionStorage[currentResource] !== 'undefined')
+                document.getElementById(JSON.parse(window.sessionStorage[currentResource]).type).checked = true;
         }
     }
     else if(getData.readyState === XMLHttpRequest.DONE && getData.status !== 200){
