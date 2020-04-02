@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var numberOfResourcesForAnnotation = 10;
 var currentResource = 0;
 var numberOfAnnotations = 0;
 var dir = "forward";
@@ -63,11 +64,16 @@ getData.onreadystatechange = function(){
             mergeCells();
             window.scrollTo(0,0);
             document.getElementById("loading_icon").style.display = 'none';
-            if(json.numberOfAnnotations >= 0)
-                document.getElementById("numberOfAnnotations").innerText = json.numberOfAnnotations;
-                document.getElementById("numberOfAnnotationsToSubmit").innerText = window.sessionStorage.length;
+            if(json.numberOfAnnotations >= 0){
+                document.getElementById("numberOfAnnotations").innerText
+                    = (numberOfAnnotations=json.numberOfAnnotations);
+                document.getElementById("numberOfAnnotationsToSubmit").innerText
+                    = window.sessionStorage.length;
+                numberOfAnnotations+=window.sessionStorage.length;
+            }
             if(typeof window.sessionStorage[currentResource] !== 'undefined')
                 document.getElementById(JSON.parse(window.sessionStorage[currentResource]).type).checked = true;
+            checkNumberOfAnnotations();
         }
     }
     else if(getData.readyState === XMLHttpRequest.DONE && getData.status !== 200){
@@ -80,7 +86,10 @@ sendData.onreadystatechange = function(){
     if(sendData.readyState === XMLHttpRequest.DONE && sendData.status === 201){
         alert("Data have been successfully uploaded to the server.");
         window.sessionStorage.clear();
-        location.reload(true);
+        if(numberOfAnnotations >= 10)
+            location.href = "s/thankyou";
+        else
+            location.reload(true);
     }
     else if(sendData.readyState === XMLHttpRequest.DONE && sendData.status !== 201){
         alert("Failed to upload data to the server.");
@@ -99,6 +108,7 @@ function requestData(direction){
 function saveData(){
     let radioButtons = document.getElementById("radio_buttons").getElementsByTagName("input");
     let before = currentResource;
+    let numberOfAnnotationsBefore = window.sessionStorage.length;
     for(let i=0; i<radioButtons.length;i++){
         radioButton = radioButtons[i];
         if(radioButton.checked === true){
@@ -109,6 +119,10 @@ function saveData(){
             radioButton.checked = false;
         }
     }
+    if(numberOfAnnotationsBefore < window.sessionStorage.length){
+        numberOfAnnotations++;
+        checkNumberOfAnnotations();
+    }
     if(before === currentResource){
         (dir==="forward" ? currentResource++ : currentResource--);
     }
@@ -118,7 +132,7 @@ function submitData(){
     saveData();
     let data = new Object();
     data.numberOfAnnotations = window.sessionStorage.length;
-    data.annotations = new Array(currentResource+1);
+    data.annotations = new Array(window.sessionStorage.length);
     for(let i=0;i<window.sessionStorage.length;i++){
         data.annotations[i] = JSON.parse(window.sessionStorage.getItem(i));
     }
@@ -147,3 +161,9 @@ function mergeCells(){
 window.onload = function(){
     mergeCells();
 };
+
+function checkNumberOfAnnotations(){
+    if(numberOfResourcesForAnnotation < numberOfAnnotations)
+        alert("You have annotated enough resources.\n" +
+              "You can now submit them and feel free to close the window.");
+}
