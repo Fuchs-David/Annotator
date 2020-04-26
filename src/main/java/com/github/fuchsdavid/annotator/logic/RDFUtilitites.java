@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.fuchsdavid.annotator.util;
+package com.github.fuchsdavid.annotator.logic;
 
 import com.github.fuchsdavid.annotator.Main;
 import static com.github.fuchsdavid.annotator.Main.SPARQLendpoint;
@@ -41,8 +41,8 @@ import org.apache.jena.shared.PrefixMapping;
  * 
  * @author David Fuchs
  */
-public class RDFUtils {
-    private static final Logger LOGGER = Logger.getLogger(RDFUtils.class.getName());
+public class RDFUtilitites {
+    private static final Logger LOGGER = Logger.getLogger(RDFUtilitites.class.getName());
     
     public static final PrefixMapping PM = PrefixMapping.Factory.create();
     
@@ -63,11 +63,11 @@ public class RDFUtils {
                                     StandardCharsets.UTF_8);
         }
         catch (IOException ex) {
-            Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RDFUtilitites.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    private RDFUtils(){}
+    private RDFUtilitites(){}
     /**
      * Retrieves triples from SPARQL endpoint using query loaded from resource file.
      * 
@@ -144,7 +144,7 @@ public class RDFUtils {
             qe.close();
             return numberOfAnnotations;
         } catch (MalformedURLException ex) {
-            Logger.getLogger(RDFUtils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(RDFUtilitites.class.getName()).log(Level.SEVERE, null, ex);
         }
         return -1;
     }

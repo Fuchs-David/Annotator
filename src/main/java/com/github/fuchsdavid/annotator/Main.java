@@ -16,8 +16,8 @@
  */
 package com.github.fuchsdavid.annotator;
 
-import com.github.fuchsdavid.annotator.util.HTTPServerUtils;
-import com.github.fuchsdavid.annotator.util.RDFUtils;
+import com.github.fuchsdavid.annotator.logic.Annotator;
+import com.github.fuchsdavid.annotator.logic.RDFUtilitites;
 import com.sun.net.httpserver.HttpServer;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -127,7 +127,7 @@ public class Main {
                 String[] line = scanner.nextLine().split("\\t");
                 if(line.length != 2)
                     throw new Exception("Failed to parse prefix list");
-                RDFUtils.PM.setNsPrefix(line[0], new URL(line[1]).toExternalForm());
+                RDFUtilitites.PM.setNsPrefix(line[0], new URL(line[1]).toExternalForm());
             }
         }
         catch(MalformedURLException | NoSuchAlgorithmException | ParserConfigurationException | SAXException ex){
@@ -153,7 +153,7 @@ public class Main {
      */
     public static void main(String[] args){
         Argument.parseArguments(args);
-        if((server = HTTPServerUtils.runHTTPServer()) == null) System.exit(1);
+        if((server = Annotator.runHTTPServer()) == null) System.exit(1);
         LOGGER.log(Level.INFO, "{0}: Started HTTP server on port " + port + ".", new Timestamp(System.currentTimeMillis()));
     }
 }

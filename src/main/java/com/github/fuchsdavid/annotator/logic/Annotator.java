@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.fuchsdavid.annotator.util;
+package com.github.fuchsdavid.annotator.logic;
 
 import com.github.fuchsdavid.annotator.Main;
 import static com.github.fuchsdavid.annotator.Main.*;
@@ -69,10 +69,10 @@ import org.w3c.dom.Node;
  * 
  * @author David Fuchs
  */
-public class HTTPServerUtils {
-    private static final Logger LOGGER = Logger.getLogger(HTTPServerUtils.class.getName());
+public class Annotator {
+    private static final Logger LOGGER = Logger.getLogger(Annotator.class.getName());
     
-    private HTTPServerUtils(){}
+    private Annotator(){}
     
 
     /**
@@ -84,10 +84,10 @@ public class HTTPServerUtils {
         HttpServer server = null;
         try {
             server = HttpServer.create(new InetSocketAddress(port),30);
-            server.createContext("/", HTTPServerUtils::handleRequest);
-            server.createContext("/data", HTTPServerUtils::handleDataRequest);
-            server.createContext("/auth", HTTPServerUtils::handleAuthentication);
-            server.createContext("/s/", HTTPServerUtils::doGetStaticFiles);
+            server.createContext("/", Annotator::handleRequest);
+            server.createContext("/data", Annotator::handleDataRequest);
+            server.createContext("/auth", Annotator::handleAuthentication);
+            server.createContext("/s/", Annotator::doGetStaticFiles);
             server.start();
         }
         catch (IOException ex) {
@@ -194,7 +194,7 @@ public class HTTPServerUtils {
             path += "www" + exchange.getRequestURI().getPath() + ".xhtml";
         if(exchange.getRequestURI().getPath().equals("/")){
             if(!ID2MODEL_LIST.containsKey(session_id)){
-                Model m = RDFUtils.retrieveTriples(exchange,session_id);
+                Model m = RDFUtilitites.retrieveTriples(exchange,session_id);
                 Collection<Model> rdfCollection = new ArrayList<>();
                 rdfCollection.add(m);
                 ID2MODEL_LIST.put(session_id,rdfCollection);
@@ -203,7 +203,7 @@ public class HTTPServerUtils {
             try{
                 final Integer[] numberOfAnnotations = new Integer[1];
                 Thread thread = new Thread(() -> {
-                    numberOfAnnotations[0] = RDFUtils.getNumberOfAnnotations(exchange, session_id,
+                    numberOfAnnotations[0] = RDFUtilitites.getNumberOfAnnotations(exchange, session_id,
                                                                              Main.ID2USER.get(session_id).email);
                 });
                 thread.start();
@@ -244,7 +244,7 @@ public class HTTPServerUtils {
                            new Timestamp(System.currentTimeMillis()));
                 System.exit(1);
             } catch (InterruptedException ex) {
-                Logger.getLogger(HTTPServerUtils.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Annotator.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         else{
@@ -267,14 +267,14 @@ public class HTTPServerUtils {
         final Node c = document.createElement("strong");
         c.appendChild(document.createTextNode("You are currently annotating resource:"));
         caption.appendChild(c);
-        caption.appendChild(document.createTextNode(" " + RDFUtils.getPrefixedName(m.listSubjects().next())));
+        caption.appendChild(document.createTextNode(" " + RDFUtilitites.getPrefixedName(m.listSubjects().next())));
         sortStatementsByPredicates(m).forEach(statement -> {
             Node tr = tbody.appendChild(document.createElement("tr"));
             Node p = tr.appendChild(document.createElement("td"));
-            p.setTextContent(RDFUtils.getPrefixedName(statement.getPredicate()));
+            p.setTextContent(RDFUtilitites.getPrefixedName(statement.getPredicate()));
             Node o = tr.appendChild(document.createElement("td"));
             if(statement.getObject().isResource())
-                o.setTextContent(RDFUtils.getPrefixedName(statement.getObject().asResource()));
+                o.setTextContent(RDFUtilitites.getPrefixedName(statement.getObject().asResource()));
             else
                 o.setTextContent(statement.getObject().asLiteral().getLexicalForm());
         });
@@ -333,7 +333,7 @@ public class HTTPServerUtils {
         Model m = null;
         final Integer[] numberOfAnnotations = new Integer[1];
         Thread thread = new Thread(() -> {
-            numberOfAnnotations[0] = RDFUtils.getNumberOfAnnotations(exchange, session_id,
+            numberOfAnnotations[0] = RDFUtilitites.getNumberOfAnnotations(exchange, session_id,
                                                                      Main.ID2USER.get(session_id).email);
         });
         thread.start();
@@ -342,7 +342,7 @@ public class HTTPServerUtils {
                 if(ID2POSITION.get(session_id).getPosition() >= ID2MODEL_LIST.get(session_id).size() - 1){
                     LOGGER.log(Level.INFO, "{0}: Requesting more data from SPARQL endpoint.",
                                new Timestamp(System.currentTimeMillis()));
-                    m = RDFUtils.retrieveTriples(exchange,session_id);
+                    m = RDFUtilitites.retrieveTriples(exchange,session_id);
                     ID2POSITION.get(session_id).preincrement();
                     rdfCollection.add(m);
                 }
@@ -361,7 +361,7 @@ public class HTTPServerUtils {
         try {
             thread.join();
         } catch (InterruptedException ex) {
-            Logger.getLogger(HTTPServerUtils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Annotator.class.getName()).log(Level.SEVERE, null, ex);
         }
         if(m == null){
             LOGGER.log(Level.WARNING, "{0}: No data found.",
@@ -376,10 +376,10 @@ public class HTTPServerUtils {
             JsonArrayBuilder array = JF.createArrayBuilder();
             sortStatementsByPredicates(m).forEach(statement -> {
                 JsonObjectBuilder createTriple = JF.createObjectBuilder()
-                    .add("subject", RDFUtils.getPrefixedName(statement.getSubject()));
-                createTriple.add("predicate", RDFUtils.getPrefixedName(statement.getPredicate()));
+                    .add("subject", RDFUtilitites.getPrefixedName(statement.getSubject()));
+                createTriple.add("predicate", RDFUtilitites.getPrefixedName(statement.getPredicate()));
                 if(statement.getObject().isResource())
-                    createTriple.add("object", RDFUtils.getPrefixedName(statement.getObject().asResource()));
+                    createTriple.add("object", RDFUtilitites.getPrefixedName(statement.getObject().asResource()));
                 else
                     createTriple.add("object",statement.getObject().asLiteral().getLexicalForm());
                 array.add(createTriple.build());
@@ -482,7 +482,7 @@ public class HTTPServerUtils {
             LOGGER.log(Level.INFO, "{0}: Successfully entered data into the triplestore.",
                        new Timestamp(System.currentTimeMillis()));
             ArrayList<Model> rdfCollection = new ArrayList<>();
-            rdfCollection.add(RDFUtils.retrieveTriples(exchange, session_id));
+            rdfCollection.add(RDFUtilitites.retrieveTriples(exchange, session_id));
             ID2MODEL_LIST.put(session_id, rdfCollection);
             ID2POSITION.put(session_id, new Position(0));
         }

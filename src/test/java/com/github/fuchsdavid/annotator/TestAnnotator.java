@@ -16,7 +16,7 @@
  */
 package com.github.fuchsdavid.annotator;
 
-import com.github.fuchsdavid.annotator.util.HTTPServerUtils;
+import com.github.fuchsdavid.annotator.logic.Annotator;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
@@ -29,9 +29,9 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author User
  */
-public class TestHTTPServerUtils {
+public class TestAnnotator {
     
-    public TestHTTPServerUtils() {
+    public TestAnnotator() {
     }
     
     @BeforeAll
@@ -57,14 +57,14 @@ public class TestHTTPServerUtils {
     // public void hello() {}
     @Test
     public void shouldRunServerOnUnusedPort(){
-        HttpServer server = HTTPServerUtils.runHTTPServer();
+        HttpServer server = Annotator.runHTTPServer();
         assertNotNull(server);
     }
     @Test
     public void shouldNotRunServerOnUsedPort(){
         Main.port = 3030;
-        HttpServer server = HTTPServerUtils.runHTTPServer();
+        HttpServer server = Annotator.runHTTPServer();
         assertNotNull(server);
-        assertNull(HTTPServerUtils.runHTTPServer());
+        assertNull(Annotator.runHTTPServer());
     }
 }
