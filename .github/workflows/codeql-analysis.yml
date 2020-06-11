@@ -2,9 +2,11 @@ name: "Code scanning - action"
 
 on:
   push:
+    branches: [ master ]
   pull_request:
+    branches: [ master ]
   schedule:
-    - cron: '0 20 * * 4'
+    - cron: '15 20 * * 4'
 
 jobs:
   CodeQL-Build:
@@ -18,6 +20,9 @@ jobs:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.
         fetch-depth: 2
+
+    - name: Run maven script
+      uses: action-maven-cli/jdk13@master
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
@@ -43,9 +48,8 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - run: |
+        mvn install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
