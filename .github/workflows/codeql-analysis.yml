@@ -12,15 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/setup-java@v1
+      with:
+        java-version: '>=13.0.1' # The JDK version to make available on the path.
+        java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+        architecture: x64 # (x64 or x86) - defaults to x64
+  
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.
         fetch-depth: 2
-
-    - name: Run maven script
-      uses: action-maven-cli/jdk13@master
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
