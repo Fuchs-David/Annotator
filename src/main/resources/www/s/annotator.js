@@ -110,7 +110,7 @@ function saveData(){
     let before = currentResource;
     let numberOfAnnotationsBefore = window.sessionStorage.length;
     for(let i=0; i<radioButtons.length;i++){
-        radioButton = radioButtons[i];
+        let radioButton = radioButtons[i];
         if(radioButton.checked === true){
             let data = new Object();
             data.order = (dir==="forward" ? currentResource++ : currentResource--);
@@ -147,7 +147,7 @@ function mergeCells(){
     let dataRows = dataBody.getElementsByTagName("tr");
     let lastRow = null;
     let numberOfRows = 1;
-    for(i=0; i < dataRows.length; i++){
+    for(let i=0; i < dataRows.length; i++){
         if(lastRow !== null && dataRows[i].getElementsByTagName("td")[0].textContent === lastRow.getElementsByTagName("td")[0].textContent){
             dataRows[i].removeChild(dataRows[i].getElementsByTagName("td")[0]);
             lastRow.getElementsByTagName("td")[0].setAttribute("rowspan",++numberOfRows);

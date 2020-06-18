@@ -20,6 +20,7 @@ import com.github.fuchsdavid.annotator.logic.Annotator;
 import com.github.fuchsdavid.annotator.logic.RDFUtilitites;
 import com.sun.net.httpserver.HttpServer;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -88,7 +89,8 @@ public class Main {
         ARQ.init();
         try{
             PWH = new PasswordHasher();
-            JsonStructure root = Json.createReader(new FileInputStream(PASSWD)).read();
+            var passwordFileIn = new FileInputStream(PASSWD);
+            JsonStructure root = Json.createReader(passwordFileIn).read();
             JsonArray users = null;
             if(root.getValue("/users").getValueType().equals(ValueType.ARRAY))
                 users = root.getValue("/users").asJsonArray();
@@ -101,6 +103,7 @@ public class Main {
                 User u = new User(email, salt, passwordHash,true);
                 EMAIL2USER.put(email, u);
             }
+            passwordFileIn.close();
             LOGGER.log(Level.INFO, "{0}: Loaded user credentials from storage.",
                        new Timestamp(System.currentTimeMillis()));
             DOCUMENT_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -114,8 +117,10 @@ public class Main {
                     u.add(user.serialize());
                 });
                 JsonObject r = Json.createObjectBuilder().add("users", u.build()).build();
-                try {
-                    Json.createWriter(new FileOutputStream(PASSWD)).write(r);
+                try (FileOutputStream passwordFileOut = new FileOutputStream(PASSWD)) {
+                    Json.createWriter(passwordFileOut).write(r);
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }

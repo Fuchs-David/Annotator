@@ -109,7 +109,6 @@ public class Annotator {
      * Handles GET requests for static content.
      * 
      * @param exchange
-     * @param session_id
      */
     private static void doGetStaticFiles(HttpExchange exchange)
             throws IOException {
@@ -283,7 +282,7 @@ public class Annotator {
     /**
      * Return statements sorted by predicate lexicographically.
      * 
-     * @param model containing statements
+     * @param m Model containing the statements
      * @return 
      */
     private static List<Statement> sortStatementsByPredicates(Model m){
@@ -652,7 +651,7 @@ public class Annotator {
     private static String generateHash(String input){
         MD.reset();
         StringBuilder sb = new StringBuilder("");
-        for(Byte b : MD.digest(input.getBytes())){
+        for(byte b : MD.digest(input.getBytes())){
             sb.append(Integer.toHexString(b));
         }
         return "0x" + sb.toString().replace("0x", "");
