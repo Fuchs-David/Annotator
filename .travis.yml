@@ -2,6 +2,8 @@ language: java
 
 os:
   - linux
+dist:
+  - bionic
 jdk:
   - openjdk13
 
