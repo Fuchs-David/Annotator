@@ -5,7 +5,7 @@ os:
 dist:
   - bionic
 jdk:
-  - oraclejdk13
+#  - oraclejdk13
 #  - openjdk13
 
 before_install:
@@ -23,4 +23,4 @@ cache:
 install: true
 
 script:
-  - "mvn verify -e"
+#  - "mvn verify -e"
