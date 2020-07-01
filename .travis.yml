@@ -1,6 +1,9 @@
 language: java
+
+os:
+  - linux
 jdk:
-  - openjdk-ea
+  - openjdk13
 
 before_install:
   - pwd
