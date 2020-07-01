@@ -50,7 +50,7 @@ jobs:
     #    uses a compiled language
 
     - run: |
-        mvn install
+        mvn compile
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
