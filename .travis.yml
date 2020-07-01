@@ -5,7 +5,8 @@ os:
 dist:
   - bionic
 jdk:
-  - openjdk13
+  - oraclejdk13
+#  - openjdk13
 
 before_install:
   - pwd
