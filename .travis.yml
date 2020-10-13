@@ -6,7 +6,7 @@ dist:
   - bionic
 jdk:
 #  - oraclejdk13
-#  - openjdk13
+  - openjdk13
 
 before_install:
   - pwd
@@ -23,4 +23,4 @@ cache:
 install: true
 
 script:
-#  - "mvn verify -e"
+  - "mvn verify -e"
