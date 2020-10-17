@@ -110,7 +110,7 @@ public class Main {
             SPARQLendpoint = (new URL("http://localhost:3030/fuseki")).toExternalForm();
             CACHED_FILES.put(INDEX,DOCUMENT_BUILDER.parse(Main.class.getResourceAsStream(INDEX)));
             CACHED_FILES.put(AUTH,DOCUMENT_BUILDER.parse(Main.class.getResourceAsStream(AUTH)));
-            MD = MessageDigest.getInstance("SHA1");
+            MD = MessageDigest.getInstance("SHA-256");
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 final JsonArrayBuilder u = Json.createArrayBuilder();
                 EMAIL2USER.values().forEach((User user) -> {
