@@ -1,0 +1,7 @@
+{
+    "name": "Build environment with Java 13 and Maven",
+    "dockerFile": "Dockerfile-codespace",
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    }
+}
