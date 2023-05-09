@@ -125,7 +125,7 @@
         <groupId>org.apache.jena</groupId>
         <artifactId>apache-jena-libs</artifactId>
         <type>pom</type>
-        <version>4.8.0</version>
+        <version>3.16.0</version>
       </dependency>
       
       <!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
